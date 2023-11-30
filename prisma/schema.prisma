@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Establishment {
+  uuid         String     @id @default(uuid())
+  description  String
+  phone        String
+  installments Int
+  alert        String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  Category     Category[]
+  Products     Products[]
+  carousel     Carousel[]
+}
+
+model Category {
+  uuid              String        @id @default(uuid())
+  name              String
+  establishment     Establishment @relation(fields: [establishmentUuid], references: [uuid])
+  establishmentUuid String
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  Products          Products[]
+}
+
+model Carousel {
+  establishment     Establishment @relation(fields: [establishmentUuid], references: [uuid])
+  establishmentUuid String
+  uuid              String        @id @default(uuid())
+}
+
+model Products {
+  uuid              String         @id @default(uuid())
+  name              String
+  description       String         @db.VarChar(510)
+  price             Float
+  promotionalPrice  Float?
+  quantity          Int
+  isActive          Boolean        @default(true)
+  category          Category?      @relation(fields: [categoryUuid], references: [uuid])
+  categoryUuid      String?
+  establishment     Establishment  @relation(fields: [establishmentUuid], references: [uuid])
+  establishmentUuid String
+  Image             Image[]
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  ProductsSize      ProductsSize[]
+}
+
+model ProductsSize {
+  uuid        String   @id @default(uuid())
+  product     Products @relation(fields: [productUuid], references: [uuid], onDelete: Cascade, onUpdate: Cascade)
+  productUuid String
+  size        Size     @relation(fields: [sizeUuid], references: [uuid])
+  sizeUuid    String
+}
+
+model Size {
+  uuid         String         @id @default(uuid())
+  name         String
+  ProductsSize ProductsSize[]
+}
+
+model Image {
+  uuid        String   @id @default(uuid())
+  imageId     String   @unique
+  product     Products @relation(fields: [productUuid], references: [uuid], onDelete: Cascade, onUpdate: Cascade)
+  productUuid String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model User {
+  uuid         String      @id @default(uuid())
+  email        String      @unique
+  name         String
+  password     String
+  isAdmin      Boolean     @default(false)
+  refreshToken String
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  resetToken   ResetToken?
+}
+
+model ResetToken {
+  uuid      String   @id @default(uuid())
+  token     String
+  userId    String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [uuid], onDelete: Cascade, onUpdate: Cascade)
+}
