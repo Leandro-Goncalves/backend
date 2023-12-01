@@ -9,7 +9,7 @@ import {
 import { UsersService } from './users.service';
 import { RegisterUserDTO } from './dto/RegisterUserDTO';
 import { LoginUserDTO } from './dto/LoginUserDTO';
-import { Roles, UserWithToken } from './entities/User.entity';
+import { Roles, UserWithToken } from './entities/user.entity';
 import { RefreshTokenDTO } from './dto/RefreshTokenDTO';
 import { AuthReq } from '../../types/authReq';
 import { ResetPasswordDTO } from './dto/ResetPasswordDTO';
