@@ -22,7 +22,7 @@ import { CarouselModule } from './routes/carousel/carousel.module';
     S3Module.forRoot({
       config: {
         credentials: {
-          accessKeyId: Env.AlgoliaApplicationID,
+          accessKeyId: Env.CDN_KEY_ID,
           secretAccessKey: Env.CDN_PASSWORD,
         },
         region: Env.CDN_REGION,
