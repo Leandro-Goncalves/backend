@@ -7,7 +7,7 @@ export class ImagesService {
 
   private s3Upload = async (file: Express.Multer.File, key: string) => {
     const params = {
-      Bucket: 'cacau-images',
+      Bucket: 'imgs',
       Key: key,
       Body: file.buffer,
       ContentType: file.mimetype,
@@ -18,7 +18,7 @@ export class ImagesService {
 
   private s3Remove = async (key: string) => {
     const params = {
-      Bucket: 'cacau-images',
+      Bucket: 'imgs',
       Key: key,
     };
 

@@ -22,11 +22,11 @@ import { CarouselModule } from './routes/carousel/carousel.module';
     S3Module.forRoot({
       config: {
         credentials: {
-          accessKeyId: 'masoud',
-          secretAccessKey: 'Strong#Pass#2022',
+          accessKeyId: Env.AlgoliaApplicationID,
+          secretAccessKey: Env.CDN_PASSWORD,
         },
-        region: 'us-east-1',
-        endpoint: 'http://127.0.0.1:9000',
+        region: Env.CDN_REGION,
+        endpoint: Env.CDN_URL,
         forcePathStyle: true,
       },
     }),
