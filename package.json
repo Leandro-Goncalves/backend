@@ -41,7 +41,6 @@
     "class-validator": "^0.14.0",
     "date-fns": "^2.30.0",
     "handlebars": "^4.7.8",
-    "nestjs-algolia": "^4.0.1",
     "nestjs-s3": "^2.0.1",
     "nodemailer": "^6.9.6",
     "reflect-metadata": "^0.1.13",

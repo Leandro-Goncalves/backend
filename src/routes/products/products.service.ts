@@ -4,7 +4,6 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { PrismaService } from '@/prisma/prisma.service';
 import { Errors } from '@/errors';
 import { randomUUID } from 'crypto';
-// import { AlgoliaService } from 'nestjs-algolia';
 
 @Injectable()
 export class ProductsService {
