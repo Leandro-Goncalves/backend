@@ -1,9 +1,9 @@
 import { UnauthorizedException } from '@nestjs/common';
 
 export const InvalidResetTokenError = new UnauthorizedException(
-  'reset token is invalid',
+  'reset token invalido',
 );
 
 export const ExpiredResetTokenError = new UnauthorizedException(
-  'reset token is expired',
+  'reset token expirado',
 );

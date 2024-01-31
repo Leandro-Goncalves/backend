@@ -1,7 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { UsersModule } from './routes/users/users.module';
-import { MailerModule } from '@nestjs-modules/mailer';
 import { BullModule } from '@nestjs/bull';
 import { DateService } from './date/date.service';
 import { HttpInterceptor } from './AppLoggerMiddleware';
@@ -12,39 +11,27 @@ import { ProductsModule } from './routes/products/products.module';
 import { GlobalModule } from './global/global.module';
 import { CategoryModule } from './routes/category/category.module';
 import { AuthGuard } from './auth/auth.guard';
-import { S3Module } from 'nestjs-s3';
 import { ImagesModule } from './routes/images/images.module';
 import { CarouselModule } from './routes/carousel/carousel.module';
+import { CheckoutModule } from './routes/checkout/checkout.module';
+import { FreightModule } from './routes/freight/freight.module';
+import { MelhorEnvioModule } from './modules/melhor-envio/melhor-envio.module';
+import { AssasModule } from './modules/assas/assas.module';
+import { S3Service } from './services/s3/s3.service';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Global()
 @Module({
   imports: [
-    S3Module.forRoot({
-      config: {
-        credentials: {
-          accessKeyId: Env.CDN_KEY_ID,
-          secretAccessKey: Env.CDN_PASSWORD,
-        },
-        region: Env.CDN_REGION,
-        endpoint: Env.CDN_URL,
-        forcePathStyle: true,
-      },
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..'),
+      renderPath: 'imgs',
     }),
     JwtModule.register({
       global: true,
       secret: Env.JWTSecret,
       signOptions: { expiresIn: '1d' },
-    }),
-    MailerModule.forRoot({
-      defaults: {
-        from: 'whiteWolf@localhost',
-      },
-      transport: {
-        host: 'localhost',
-        secure: false,
-        port: 1025,
-        ignoreTLS: true,
-      },
     }),
     BullModule.forRoot({
       redis: {
@@ -59,6 +46,17 @@ import { CarouselModule } from './routes/carousel/carousel.module';
     CategoryModule,
     ImagesModule,
     CarouselModule,
+    CheckoutModule,
+    FreightModule,
+    AssasModule.register({
+      global: true,
+      environment: 'homologacao',
+      token: Env.AssasToken,
+    }),
+    MelhorEnvioModule.register({
+      global: true,
+      token: Env.MelhorEnvioToken,
+    }),
   ],
   controllers: [],
   providers: [
@@ -71,7 +69,8 @@ import { CarouselModule } from './routes/carousel/carousel.module';
       provide: APP_GUARD,
       useClass: AuthGuard,
     },
+    S3Service,
   ],
-  exports: [JwtModule, MailerModule, DateService],
+  exports: [JwtModule, MelhorEnvioModule, DateService],
 })
 export class AppModule {}

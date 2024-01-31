@@ -1,12 +1,5 @@
 import { Products } from '@prisma/client';
-import {
-  IsUUID,
-  IsString,
-  IsNumber,
-  IsInt,
-  IsBoolean,
-  IsOptional,
-} from 'class-validator';
+import { IsUUID, IsString, IsBoolean } from 'class-validator';
 
 export class Product implements Partial<Products> {
   @IsUUID()
@@ -17,16 +10,6 @@ export class Product implements Partial<Products> {
 
   @IsString()
   description: string;
-
-  @IsNumber()
-  price: number;
-
-  @IsString()
-  @IsOptional()
-  promotionalPrice: number;
-
-  @IsInt()
-  quantity: number;
 
   @IsString()
   establishmentUuid: string;

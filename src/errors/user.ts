@@ -1,13 +1,13 @@
 import { UnauthorizedException } from '@nestjs/common';
 
 export const UserAlreadyExistsError = new UnauthorizedException(
-  'User already exists',
+  'O usuário já existe',
 );
 
 export const UserOrEmailNotRegisteredError = new UnauthorizedException(
-  'User and/or email is invalid',
+  'Usuário e/or email invalido',
 );
 
 export const EmailNotRegisteredError = new UnauthorizedException(
-  'Email is invalid',
+  'Email invalido',
 );

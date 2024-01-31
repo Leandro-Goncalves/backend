@@ -25,6 +25,7 @@ model Category {
   name              String
   establishment     Establishment @relation(fields: [establishmentUuid], references: [uuid])
   establishmentUuid String
+  position          Int?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
   Products          Products[]
@@ -37,29 +38,40 @@ model Carousel {
 }
 
 model Products {
-  uuid              String         @id @default(uuid())
+  uuid              String           @id @default(uuid())
   name              String
-  description       String         @db.VarChar(510)
-  price             Float
-  promotionalPrice  Float?
-  quantity          Int
-  isActive          Boolean        @default(true)
-  category          Category?      @relation(fields: [categoryUuid], references: [uuid])
+  description       String           @db.VarChar(510)
+  isActive          Boolean          @default(true)
+  category          Category?        @relation(fields: [categoryUuid], references: [uuid])
   categoryUuid      String?
-  establishment     Establishment  @relation(fields: [establishmentUuid], references: [uuid])
+  establishment     Establishment    @relation(fields: [establishmentUuid], references: [uuid])
   establishmentUuid String
-  Image             Image[]
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-  ProductsSize      ProductsSize[]
+  variants          ProductVariant[]
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+}
+
+model ProductVariant {
+  guid             String         @id @default(uuid())
+  name             String
+  price            Float
+  promotionalPrice Float?
+  Image            Image[]
+  size             ProductsSize[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  Products         Products?      @relation(fields: [productsUuid], references: [uuid])
+  isFavorite       Boolean        @default(false)
+  productsUuid     String?
 }
 
 model ProductsSize {
-  uuid        String   @id @default(uuid())
-  product     Products @relation(fields: [productUuid], references: [uuid], onDelete: Cascade, onUpdate: Cascade)
-  productUuid String
-  size        Size     @relation(fields: [sizeUuid], references: [uuid])
-  sizeUuid    String
+  uuid               String          @id @default(uuid())
+  quantity           Int
+  size               Size            @relation(fields: [sizeUuid], references: [uuid])
+  sizeUuid           String
+  ProductVariant     ProductVariant? @relation(fields: [productVariantGuid], references: [guid])
+  productVariantGuid String?
 }
 
 model Size {
@@ -69,24 +81,27 @@ model Size {
 }
 
 model Image {
-  uuid        String   @id @default(uuid())
-  imageId     String   @unique
-  product     Products @relation(fields: [productUuid], references: [uuid], onDelete: Cascade, onUpdate: Cascade)
-  productUuid String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  uuid               String          @id @default(uuid())
+  imageId            String          @unique
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  ProductVariant     ProductVariant? @relation(fields: [productVariantGuid], references: [guid])
+  productVariantGuid String?
 }
 
 model User {
-  uuid         String      @id @default(uuid())
-  email        String      @unique
+  uuid         String         @id @default(uuid())
+  email        String         @unique
   name         String
   password     String
-  isAdmin      Boolean     @default(false)
+  isAdmin      Boolean        @default(false)
   refreshToken String
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
   resetToken   ResetToken?
+  orders       Order[]
+  OrderTakeout OrderTakeout[]
+  Panic        Panic[]
 }
 
 model ResetToken {
@@ -96,4 +111,54 @@ model ResetToken {
   expiresAt DateTime
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [uuid], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model OrderTakeout {
+  guid        String      @id @default(uuid())
+  products    Json
+  total       Float
+  status      OrderStatus @default(pending)
+  user        User        @relation(fields: [userId], references: [uuid], onDelete: Cascade, onUpdate: Cascade)
+  userId      String
+  cpf         String
+  paymentLink String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Panic {
+  uuid      String   @id @default(uuid())
+  order     Json
+  user      User     @relation(fields: [userId], references: [uuid], onDelete: Cascade, onUpdate: Cascade)
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Order {
+  guid         String      @id @default(uuid())
+  products     Json
+  total        Float
+  status       OrderStatus @default(pending)
+  user         User        @relation(fields: [userId], references: [uuid], onDelete: Cascade, onUpdate: Cascade)
+  userId       String
+  freightId    Int
+  paymentLink  String
+  state        String
+  city         String
+  neighborhood String
+  street       String
+  number       String
+  cep          String
+  complement   String?
+  cpf          String
+  tracking     String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+enum OrderStatus {
+  pending
+  success
+  cancelled
 }

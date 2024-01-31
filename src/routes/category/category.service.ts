@@ -3,6 +3,7 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { PrismaService } from '@/prisma/prisma.service';
 import { Errors } from '@/errors';
+import { ReorderDto } from './dto/reorder.dto';
 
 @Injectable()
 export class CategoryService {
@@ -40,6 +41,20 @@ export class CategoryService {
     });
   }
 
+  async reorder(reorderDto: ReorderDto) {
+    reorderDto.guids.forEach(async (guid, index) => {
+      const asd = await this.prisma.category.update({
+        where: {
+          uuid: guid,
+        },
+        data: {
+          position: index,
+        },
+      });
+      console.log(asd);
+    });
+  }
+
   async findAll(establishmentUuid: string) {
     return this.prisma.category
       .findMany({
@@ -48,19 +63,10 @@ export class CategoryService {
           name: true,
           Products: {
             include: {
-              Image: {
-                select: {
-                  imageId: true,
-                },
-              },
-              ProductsSize: {
-                select: {
-                  size: {
-                    select: {
-                      uuid: true,
-                      name: true,
-                    },
-                  },
+              variants: {
+                include: {
+                  size: true,
+                  Image: true,
                 },
               },
             },
@@ -69,18 +75,15 @@ export class CategoryService {
         where: {
           establishmentUuid,
         },
+        orderBy: {
+          position: 'asc',
+        },
       })
       .then((categories) => {
         return categories.map((category) => {
+          console.log(category.Products.length);
           return {
             ...category,
-            Products: category.Products.map((product) => {
-              return {
-                ...product,
-                ProductsSize: undefined,
-                sizes: product.ProductsSize.map((size) => size.size),
-              };
-            }),
           };
         });
       });

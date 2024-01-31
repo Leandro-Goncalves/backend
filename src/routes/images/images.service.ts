@@ -1,28 +1,20 @@
+import { S3Service } from '@/services/s3/s3.service';
 import { Injectable } from '@nestjs/common';
-import { InjectS3, S3 } from 'nestjs-s3';
-
 @Injectable()
 export class ImagesService {
-  constructor(@InjectS3() private readonly s3: S3) {}
+  constructor(private s3Service: S3Service) {}
 
   private s3Upload = async (file: Express.Multer.File, key: string) => {
     const params = {
-      Bucket: 'imgs',
       Key: key,
       Body: file.buffer,
-      ContentType: file.mimetype,
     };
 
-    return this.s3.putObject(params);
+    return this.s3Service.create(params);
   };
 
   private s3Remove = async (key: string) => {
-    const params = {
-      Bucket: 'imgs',
-      Key: key,
-    };
-
-    return this.s3.deleteObject(params);
+    return this.s3Service.delete(key);
   };
 
   async create(imageFile: Express.Multer.File, imageId: string) {

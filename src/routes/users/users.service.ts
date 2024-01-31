@@ -8,12 +8,9 @@ import { Roles, UserWithToken } from './entities/user.entity';
 import { randomUUID } from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { RefreshTokenDTO } from './dto/RefreshTokenDTO';
-import { InjectQueue } from '@nestjs/bull';
-import { Queue } from 'bull';
-import { sendEmailDTO } from '@/jobs/email.job';
-import { generateView } from '@/templates';
 import { DateService } from '@/date/date.service';
 import { Env } from '@/config/env';
+import { BrevoService } from '@/services/brevo/brevo.service';
 
 @Injectable()
 export class UsersService {
@@ -21,8 +18,8 @@ export class UsersService {
     private prisma: PrismaService,
     private bcryptService: BcryptService,
     private jwtService: JwtService,
+    private brevoService: BrevoService,
     private dateService: DateService,
-    @InjectQueue('email-job') private emailJob: Queue<sendEmailDTO>,
   ) {}
   async register(nUser: RegisterUserDTO): Promise<void> {
     const newUser = { ...nUser };
@@ -42,7 +39,10 @@ export class UsersService {
       data: { ...newUser, refreshToken: randomUUID() },
     });
 
-    return;
+    await this.brevoService.createContact({
+      email: newUser.email,
+      name: newUser.name,
+    });
   }
 
   async login(user: LoginUserDTO): Promise<UserWithToken> {
@@ -79,11 +79,16 @@ export class UsersService {
   }
 
   private generateJWTToken(userId: string, isAdmin: boolean): string {
-    return this.jwtService.sign({
-      id: userId,
-      role: [Roles.USER, isAdmin ? Roles.ADMIN : []].flat(),
-      establishmentUuid: Env.EstablishmentUUID,
-    });
+    return this.jwtService.sign(
+      {
+        id: userId,
+        role: [Roles.USER, isAdmin ? Roles.ADMIN : []].flat(),
+        establishmentUuid: Env.EstablishmentUUID,
+      },
+      {
+        expiresIn: '10y',
+      },
+    );
   }
 
   async refreshToken(
@@ -153,17 +158,49 @@ export class UsersService {
       },
     });
 
-    this.emailJob.add({
-      to: user.email,
-      subject: 'Password Recovery',
-      content: generateView({
-        type: 'forgotPassword',
-        data: {
-          name: user.name,
-          link: `http://localhost:3000/resetPassword/${resetPassword}`,
-        },
-      }),
+    this.brevoService.sendForgotPassword({
+      name: user.name,
+      resetPassword,
+      email: user.email,
     });
+  }
+
+  async updateData(userId: string, newName: string, newPassword?: string) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        uuid: userId,
+      },
+    });
+
+    if (!user) {
+      throw Errors.UnauthorizedUser;
+    }
+
+    if (newPassword) {
+      user.password = await this.bcryptService.hash(newPassword);
+    }
+
+    user.name = newName;
+
+    await this.prisma.user.update({
+      where: {
+        uuid: userId,
+      },
+      data: {
+        name: user.name,
+        password: user.password,
+      },
+    });
+
+    const token = this.generateJWTToken(user.uuid, user.isAdmin);
+
+    return {
+      id: user.uuid,
+      email: user.email,
+      name: user.name,
+      refreshToken: user.refreshToken,
+      token,
+    };
   }
 
   async resetPasswordCode(newPassword: string, code: string): Promise<void> {

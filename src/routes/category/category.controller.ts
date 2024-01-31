@@ -15,6 +15,7 @@ import { AuthReq } from '@/types/authReq';
 import { UseAuth } from '@/auth/roles.decorator';
 import { Roles } from '@/routes/users/entities/user.entity';
 import { LinkProductsDto } from './dto/link-products.dto';
+import { ReorderDto } from './dto/reorder.dto';
 
 @Controller('category')
 export class CategoryController {
@@ -67,6 +68,12 @@ export class CategoryController {
       id,
       updateCategoryDto,
     );
+  }
+
+  @UseAuth([Roles.ADMIN])
+  @Post('reorder')
+  reorder(@Body() reorderDto: ReorderDto) {
+    return this.categoryService.reorder(reorderDto);
   }
 
   @UseAuth([Roles.ADMIN])

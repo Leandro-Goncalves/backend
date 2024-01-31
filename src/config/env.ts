@@ -54,4 +54,11 @@ export class Env {
   static get CDN_REGION(): string {
     return process.env.CDN_REGION;
   }
+  static get MelhorEnvioToken(): string {
+    return process.env.MELHOR_ENVIO_TOKEN;
+  }
+
+  static get AssasToken(): string {
+    return process.env.ASSAS_TOKEN;
+  }
 }

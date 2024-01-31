@@ -101,7 +101,12 @@ export class ProductsController {
     const { establishmentUuid } = req.user;
     const product = await this.productsService.remove(establishmentUuid, id);
     await Promise.all(
-      product.Image.map((i) => this.imagesService.remove(i.imageId)),
+      product.variants.map(async (v) => {
+        const promiseImages = v.Image.map((i) =>
+          this.imagesService.remove(i.imageId),
+        );
+        return await Promise.all(promiseImages);
+      }),
     );
 
     return product;

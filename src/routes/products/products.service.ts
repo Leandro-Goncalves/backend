@@ -9,22 +9,23 @@ import { randomUUID } from 'crypto';
 export class ProductsService {
   constructor(private prisma: PrismaService) {}
 
-  search(query: string, category: string) {
-    // const index = this.algoliaService.initIndex('products');
-    console.log(category);
+  async search(query: string, category: string) {
+    const filter: any[] = [];
 
-    const filter: any[] = [
-      {
-        name: {
-          contains: query,
+    if (query) {
+      filter.push(
+        {
+          name: {
+            contains: query,
+          },
         },
-      },
-      {
-        description: {
-          contains: query,
+        {
+          description: {
+            contains: query,
+          },
         },
-      },
-    ];
+      );
+    }
 
     if (category) {
       filter.push({
@@ -36,18 +37,24 @@ export class ProductsService {
       });
     }
 
-    return this.prisma.products.findMany({
-      include: {
-        Image: {
-          select: {
-            imageId: true,
+    return this.prisma.products
+      .findMany({
+        include: {
+          variants: {
+            include: {
+              size: true,
+              Image: true,
+            },
           },
         },
-      },
-      where: {
-        OR: filter,
-      },
-    });
+        where:
+          filter.length > 0
+            ? {
+                OR: filter,
+              }
+            : {},
+      })
+      .then((product) => product.filter((p) => p.categoryUuid !== null));
   }
 
   hideOrShow(uuid: string, isActive: boolean) {
@@ -70,29 +77,44 @@ export class ProductsService {
 
   async create(
     establishmentUuid: string,
-    { sizes, ...createProductDto }: CreateProductDto,
+    { variants, ...createProductDto }: CreateProductDto,
   ) {
     const product = await this.prisma.products.create({
       data: {
         ...createProductDto,
         establishmentUuid,
-        ProductsSize: {
-          create: sizes.map((size) => ({
-            sizeUuid: size,
-          })),
-        },
       },
     });
 
-    // const index = this.algoliaService.initIndex('products');
+    const promises = variants.map(async ({ sizes, ...v }) => {
+      await this.prisma.productVariant.create({
+        data: {
+          ...v,
+          productsUuid: product.uuid,
+          size: {
+            createMany: {
+              data: sizes.map(({ sizeGuid, quantity }) => ({
+                sizeUuid: sizeGuid,
+                quantity,
+              })),
+            },
+          },
+        },
+      });
+    });
 
-    // index.saveObject({
-    //   objectID: product.uuid,
-    //   title: product.name,
-    //   description: product.description,
-    // });
+    await Promise.all(promises);
 
-    return product;
+    const productWithVariants = await this.prisma.products.findUnique({
+      where: {
+        uuid: product.uuid,
+      },
+      include: {
+        variants: true,
+      },
+    });
+
+    return productWithVariants;
   }
 
   async addImages(id: string, images: Express.Multer.File[]) {
@@ -104,7 +126,7 @@ export class ProductsService {
     await this.prisma.image.createMany({
       data: imageArray.map(({ imageId }) => ({
         imageId,
-        productUuid: id,
+        productVariantGuid: id,
       })),
     });
 
@@ -114,12 +136,12 @@ export class ProductsService {
   async removeImages(id: string) {
     const images = await this.prisma.image.findMany({
       where: {
-        productUuid: id,
+        productVariantGuid: id,
       },
     });
     await this.prisma.image.deleteMany({
       where: {
-        productUuid: id,
+        productVariantGuid: id,
       },
     });
     return images;
@@ -131,12 +153,10 @@ export class ProductsService {
         uuid: true,
         name: true,
         isActive: true,
-        price: true,
-        quantity: true,
         description: true,
-        Image: {
-          select: {
-            imageId: true,
+        variants: {
+          include: {
+            Image: true,
           },
         },
       },
@@ -150,19 +170,14 @@ export class ProductsService {
     return this.prisma.products
       .findUniqueOrThrow({
         include: {
-          ProductsSize: {
-            select: {
+          variants: {
+            include: {
+              Image: true,
               size: {
-                select: {
-                  uuid: true,
-                  name: true,
+                include: {
+                  size: true,
                 },
               },
-            },
-          },
-          Image: {
-            select: {
-              imageId: true,
             },
           },
         },
@@ -174,8 +189,15 @@ export class ProductsService {
       .then((product) => {
         return {
           ...product,
-          ProductsSize: undefined,
-          sizes: product.ProductsSize.map((size) => size.size),
+          variants: product.variants.map((v) => {
+            return {
+              ...v,
+              size: v.size.map((s) => ({
+                ...s.size,
+                quantity: s.quantity,
+              })),
+            };
+          }),
         };
       })
       .catch(() => {
@@ -186,21 +208,15 @@ export class ProductsService {
   async update(
     establishmentUuid: string,
     guid: string,
-    { sizes, ...updateProductDto }: UpdateProductDto,
+    updateProductDto: UpdateProductDto,
   ) {
-    await this.prisma.productsSize.deleteMany({
-      where: {
-        productUuid: guid,
-      },
-    });
-
-    return this.prisma.products
+    const products = await this.prisma.products
       .update({
         include: {
-          ProductsSize: true,
-          Image: {
-            select: {
-              imageId: true,
+          variants: {
+            include: {
+              size: true,
+              Image: true,
             },
           },
         },
@@ -210,18 +226,47 @@ export class ProductsService {
         },
         data: {
           ...updateProductDto,
-          ProductsSize: sizes
-            ? {
-                create: sizes.map((size) => ({
-                  sizeUuid: size,
-                })),
-              }
-            : undefined,
+          variants: undefined,
         },
       })
       .catch(() => {
         throw Errors.Products.NotFound;
       });
+
+    await this.prisma.productsSize.deleteMany({
+      where: {
+        productVariantGuid: {
+          in: products.variants.map((v) => v.guid),
+        },
+      },
+    });
+
+    await this.prisma.productVariant.deleteMany({
+      where: {
+        productsUuid: products.uuid,
+      },
+    });
+
+    const promises = updateProductDto.variants.map(async ({ sizes, ...v }) => {
+      await this.prisma.productVariant.create({
+        data: {
+          ...v,
+          productsUuid: guid,
+          size: {
+            createMany: {
+              data: sizes.map(({ sizeGuid, quantity }) => ({
+                sizeUuid: sizeGuid,
+                quantity,
+              })),
+            },
+          },
+        },
+      });
+    });
+
+    await Promise.all(promises);
+
+    return products;
   }
 
   async remove(establishmentUuid: string, guid: string) {
@@ -232,9 +277,9 @@ export class ProductsService {
           establishmentUuid,
         },
         include: {
-          Image: {
+          variants: {
             select: {
-              imageId: true,
+              Image: true,
             },
           },
         },

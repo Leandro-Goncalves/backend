@@ -1,9 +1,9 @@
 import { UnauthorizedException } from '@nestjs/common';
 
 export const UnauthorizedUserError = new UnauthorizedException(
-  'Token is invalid',
+  'Token invalido',
 );
 
 export const InvalidRefreshTokenError = new UnauthorizedException(
-  'Refresh token is invalid',
+  'Refresh token invalido',
 );

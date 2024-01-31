@@ -11,11 +11,6 @@ services:
       MINIO_ROOT_USER: masoud
       MINIO_ROOT_PASSWORD: Strong#Pass#2022
     command: server --console-address ":9001" /data
-  mail:
-    image: mailhog/mailhog
-    ports:
-      - '1025:1025'
-      - '8025:8025'
   cache:
     image: redis:6.2-alpine
     restart: always

@@ -5,6 +5,8 @@ import {
   Request,
   Param,
   HttpCode,
+  Put,
+  Get,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { RegisterUserDTO } from './dto/RegisterUserDTO';
@@ -15,6 +17,7 @@ import { AuthReq } from '../../types/authReq';
 import { ResetPasswordDTO } from './dto/ResetPasswordDTO';
 import { generateResetCodeDTO } from './dto/generateResetCodeDTO';
 import { UseAuth } from '@/auth/roles.decorator';
+import { updateUserDTO } from './dto/updateUserDTO';
 
 @Controller('user')
 export class UsersController {
@@ -31,15 +34,13 @@ export class UsersController {
     return this.usersService.login(user);
   }
 
-  @UseAuth([Roles.USER])
-  @Post('/refreshToken/:refresh')
+  @Get('/refreshToken/:id/:refresh')
   @HttpCode(200)
   refreshToken(
-    @Request() req: AuthReq,
+    @Param('id') userId: string,
     @Param('refresh') refreshToken: string,
   ): Promise<RefreshTokenDTO> {
-    const { id } = req.user;
-    return this.usersService.refreshToken(id, refreshToken);
+    return this.usersService.refreshToken(userId, refreshToken);
   }
 
   @Post('/resetPassword')
@@ -47,6 +48,14 @@ export class UsersController {
   resetPassword(@Body() body: generateResetCodeDTO) {
     const { email } = body;
     return this.usersService.generateResetPasswordCode(email);
+  }
+
+  @UseAuth([Roles.USER])
+  @Put('')
+  updateUser(@Request() req: AuthReq, @Body() body: updateUserDTO) {
+    const { id } = req.user;
+    const { name, password } = body;
+    return this.usersService.updateData(id, name, password);
   }
 
   @Post('/resetPassword/:code')
