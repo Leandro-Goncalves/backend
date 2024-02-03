@@ -119,7 +119,7 @@ export class ProductsService {
 
   async addImages(id: string, images: Express.Multer.File[]) {
     const imageArray = images.map((image) => ({
-      imageId: randomUUID(),
+      imageId: `${randomUUID()}-${image.originalname}`,
       image,
     }));
 

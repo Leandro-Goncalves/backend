@@ -45,7 +45,7 @@ export class CarouselController {
 
     images.forEach(async (image) => {
       const { uuid } = await this.carouselService.create(establishmentUuid);
-      this.imagesService.create(image, uuid);
+      this.imagesService.create(image, `${uuid}-${image.originalname}`);
     });
 
     return;
