@@ -20,6 +20,8 @@ lerna-debug.log*
 
 .env
 
+imgs/
+
 # IDEs and editors
 /.idea
 .project
