@@ -14,6 +14,7 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { Roles } from '../users/entities/user.entity';
 import { ImagesService } from '../images/images.service';
 import { AuthReq } from '@/types/authReq';
+import { randomUUID } from 'crypto';
 
 @Controller('carousel')
 export class CarouselController {
@@ -44,8 +45,9 @@ export class CarouselController {
     await this.carouselService.removeAll(establishmentUuid);
 
     images.forEach(async (image) => {
-      const { uuid } = await this.carouselService.create(establishmentUuid);
-      this.imagesService.create(image, `${uuid}-${image.originalname}`);
+      const name = `${randomUUID()}-${image.originalname}`;
+      await this.carouselService.create(establishmentUuid, name);
+      this.imagesService.create(image, name);
     });
 
     return;

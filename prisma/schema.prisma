@@ -34,6 +34,7 @@ model Category {
 model Carousel {
   establishment     Establishment @relation(fields: [establishmentUuid], references: [uuid])
   establishmentUuid String
+  name              String
   uuid              String        @id @default(uuid())
 }
 

@@ -4,10 +4,11 @@ import { PrismaService } from '@/prisma/prisma.service';
 @Injectable()
 export class CarouselService {
   constructor(private prisma: PrismaService) {}
-  create(establishmentUuid: string) {
+  create(establishmentUuid: string, name: string) {
     return this.prisma.carousel.create({
       data: {
         establishmentUuid,
+        name,
       },
     });
   }
@@ -19,7 +20,7 @@ export class CarouselService {
           establishmentUuid: establishmentGuid,
         },
       })
-      .then((res) => res.map((v) => v.uuid));
+      .then((res) => res.map((v) => v.name));
   }
 
   remove(guid: string) {
