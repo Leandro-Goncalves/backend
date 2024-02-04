@@ -201,7 +201,20 @@ export class CheckoutService {
   }
 
   async cancelOrder(orderId: string) {
-    return this.prisma.order.update({
+    const order = await this.getOrder(orderId);
+
+    if (order.type === 'delivery') {
+      return this.prisma.order.update({
+        where: {
+          guid: orderId,
+        },
+        data: {
+          status: OrderStatus.cancelled,
+        },
+      });
+    }
+
+    return this.prisma.orderTakeout.update({
       where: {
         guid: orderId,
       },
@@ -381,13 +394,15 @@ export class CheckoutService {
 
       await Promise.all(productsPromises);
 
-      this.createDeliveryJob.add(
-        { product: products },
-        {
-          backoff: Env.isDev ? 1000 * 10 : 1000 * 60 * 24, // dev 10s, prod 24h
-          attempts: 30,
-        },
-      );
+      if (isDelivery) {
+        this.createDeliveryJob.add(
+          { product: products },
+          {
+            backoff: Env.isDev ? 1000 * 10 : 1000 * 60 * 24, // dev 10s, prod 24h
+            attempts: 30,
+          },
+        );
+      }
     } catch {}
   }
 }

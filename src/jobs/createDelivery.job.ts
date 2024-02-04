@@ -26,9 +26,9 @@ export class CreateDeliveryJob {
     }));
 
     const formattedVolumes = productsParsed.map(() => ({
-      width: 10,
-      height: 10,
-      length: 10,
+      width: 30,
+      height: 5,
+      length: 40,
       weight: 10,
     }));
 
