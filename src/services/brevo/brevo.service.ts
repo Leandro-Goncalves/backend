@@ -7,18 +7,16 @@ import {
   TransactionalEmailsApiApiKeys,
   SendSmtpEmail,
 } from '@getbrevo/brevo';
+import { Env } from '@/config/env';
 
 const apiInstance = new ContactsApi();
 const transactionalApiInstance = new TransactionalEmailsApi();
 
-apiInstance.setApiKey(
-  ContactsApiApiKeys.apiKey,
-  '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',
-);
+apiInstance.setApiKey(ContactsApiApiKeys.apiKey, Env.BrevoApi);
 
 transactionalApiInstance.setApiKey(
   TransactionalEmailsApiApiKeys.apiKey,
-  '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',
+  Env.BrevoApi,
 );
 
 interface CreateContactDTO {

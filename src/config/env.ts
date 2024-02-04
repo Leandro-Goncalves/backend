@@ -10,6 +10,9 @@ export class Env {
   public static get isProd(): boolean {
     return !Env.isDev;
   }
+  public static get BrevoApi(): string {
+    return process.env.BREVO_TOKEN;
+  }
 
   static get RedisHost(): string {
     return process.env.REDIS_HOST || 'localhost';
