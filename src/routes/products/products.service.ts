@@ -192,10 +192,16 @@ export class ProductsService {
           variants: product.variants.map((v) => {
             return {
               ...v,
-              size: v.size.map((s) => ({
-                ...s.size,
-                quantity: s.quantity,
-              })),
+              size: v.size.flatMap((s) => {
+                if (s.quantity === 0) return [];
+
+                return [
+                  {
+                    ...s.size,
+                    quantity: s.quantity,
+                  },
+                ];
+              }),
             };
           }),
         };

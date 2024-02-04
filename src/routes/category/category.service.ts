@@ -81,9 +81,40 @@ export class CategoryService {
       })
       .then((categories) => {
         return categories.map((category) => {
-          console.log(category.Products.length);
           return {
             ...category,
+            Products: category.Products.flatMap((p) => {
+              const totalItems = p.variants.reduce(
+                (acc, cur) =>
+                  acc + cur.size.reduce((acc, cur) => acc + cur.quantity, 0),
+                0,
+              );
+
+              if (totalItems === 0) {
+                return [];
+              }
+              return [
+                {
+                  ...p,
+                  variants: p.variants.flatMap((v) => {
+                    const totalItems = v.size.reduce(
+                      (acc, cur) => acc + cur.quantity,
+                      0,
+                    );
+
+                    if (totalItems === 0) {
+                      return [];
+                    }
+                    return [
+                      {
+                        ...v,
+                        size: v.size,
+                      },
+                    ];
+                  }),
+                },
+              ];
+            }),
           };
         });
       });

@@ -9,7 +9,7 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { createDeliveryDTO } from '@/jobs/createDelivery.job';
 import { CreateCheckoutTakeoutDto } from './dto/create-checkout-takeout.dto';
-// import { Env } from '@/config/env';
+import { Env } from '@/config/env';
 
 @Injectable()
 export class CheckoutService {
@@ -162,10 +162,10 @@ export class CheckoutService {
       products: createCheckoutDto.items.map((i) => ({
         id: i.productGuid,
         quantity: i.quantity,
-        height: 10,
+        width: 30,
+        height: 5,
+        length: 40,
         weight: 10,
-        length: 10,
-        width: 10,
       })),
     });
 
@@ -265,9 +265,44 @@ export class CheckoutService {
     return [...takeoutOrdersFormatted, ...ordersFormatted];
   }
 
+  async getOrder(orderId: string) {
+    const delivery = await this.prisma.order.findUnique({
+      where: {
+        guid: orderId,
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    if (delivery)
+      return {
+        type: 'delivery',
+        data: delivery,
+      };
+
+    const takeout = await this.prisma.orderTakeout.findUnique({
+      where: {
+        guid: orderId,
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    if (takeout)
+      return {
+        type: 'takeout',
+        data: takeout,
+      };
+  }
+
   async updatePayment(orderId: string) {
     try {
-      const product = await this.prisma.order.update({
+      const orderType = await this.getOrder(orderId);
+      const isDelivery = orderType.type === 'delivery';
+
+      const orderData = {
         where: {
           guid: orderId,
         },
@@ -282,28 +317,77 @@ export class CheckoutService {
             },
           },
         },
-      });
+      };
 
-      const products = JSON.parse(product.products as string) as any[];
+      let products: any[] = [];
+
+      if (isDelivery) {
+        const p = await this.prisma.order.update(orderData);
+
+        if (!p) return;
+        products = JSON.parse(p.products as string) as any[];
+      } else {
+        const p = await this.prisma.orderTakeout.update(orderData);
+
+        if (!p) return;
+        products = JSON.parse(p.products as string) as any[];
+      }
+
+      if (products.length === 0) return;
+
       const productsPromises = products.map(async (p) => {
-        return this.prisma.productVariant.findUnique({
+        const product = await this.prisma.productVariant.findUnique({
           where: {
             guid: p.variant.guid,
           },
         });
+
+        if (!product) return;
+
+        const selectedSize = await this.prisma.productsSize.findFirst({
+          where: {
+            sizeUuid: p.sizeGuid,
+            productVariantGuid: p.variant.guid,
+          },
+        });
+
+        if (!selectedSize) return;
+
+        if (selectedSize.quantity < p.quantity) {
+          await this.prisma.panic.create({
+            data: {
+              userId: orderType.data.user.uuid,
+              order: JSON.stringify({
+                data: orderData.data,
+                data2: orderType.data,
+              }),
+            },
+          });
+          return;
+        }
+
+        await this.prisma.productsSize.update({
+          where: {
+            uuid: selectedSize.uuid,
+            productVariantGuid: p.variant.guid,
+          },
+          data: {
+            quantity: {
+              decrement: p.quantity,
+            },
+          },
+        });
       });
-      console.log(productsPromises);
 
-      const asd = await Promise.all(productsPromises);
-      console.log(asd);
+      await Promise.all(productsPromises);
 
-      // this.createDeliveryJob.add(
-      //   { product },
-      //   {
-      //     backoff: Env.isDev ? 1000 * 10 : 1000 * 60 * 24, // dev 10s, prod 24h
-      //     attempts: 30,
-      //   },
-      // );
+      this.createDeliveryJob.add(
+        { product: products },
+        {
+          backoff: Env.isDev ? 1000 * 10 : 1000 * 60 * 24, // dev 10s, prod 24h
+          attempts: 30,
+        },
+      );
     } catch {}
   }
 }
