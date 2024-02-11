@@ -60,7 +60,7 @@ export class BrevoService {
 
     sendSmtpEmail.params = {
       name,
-      link: `http://localhost:3000/resetPassword/${resetPassword}`,
+      link: `https://caacaustore.com/resetPassword/${resetPassword}`,
     };
 
     transactionalApiInstance.sendTransacEmail(sendSmtpEmail).then(
