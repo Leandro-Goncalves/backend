@@ -68,6 +68,11 @@ export class CheckoutController {
     return this.checkoutService.listOrders(id);
   }
 
+  @Get('/orders/finished/:orderId')
+  async finishedOrder(@Param('orderId') orderId: string) {
+    return this.checkoutService.finishedOrder(orderId);
+  }
+
   @HttpCode(HttpStatus.OK)
   @Post('/not')
   async notification(@Body() body: any) {

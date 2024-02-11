@@ -13,7 +13,7 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule, {
     cors: { origin: '*' },
-    httpsOptions,
+    // httpsOptions,
   });
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
 

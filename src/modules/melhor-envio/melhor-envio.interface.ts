@@ -21,12 +21,13 @@ interface CartProduct {
 export interface ShipmentCalculateDTO {
   from: string;
   to: string;
-  products: Product[];
+  volumes: Product[];
 }
 
 export interface AddToCartDTO {
   serviceId: string;
   products: CartProduct[];
+  insuranceValue?: number;
   volumes: Omit<Product, 'id' | 'quantity'>[];
   to: {
     name: string;
@@ -36,6 +37,7 @@ export interface AddToCartDTO {
     number: string;
     district: string;
     city: string;
+    phone: string;
     postal_code: string;
     complement?: string;
   };

@@ -29,7 +29,7 @@ export const Shipment = (token: string) => {
         to: {
           postal_code: shipmentCalculateDTO.to,
         },
-        products: shipmentCalculateDTO.products,
+        volumes: shipmentCalculateDTO.volumes,
       });
     },
   };

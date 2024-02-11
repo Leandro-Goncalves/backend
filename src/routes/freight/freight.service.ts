@@ -2,6 +2,8 @@ import { MelhorEnvioService } from '@/modules/melhor-envio/melhor-envio.service'
 import { Injectable } from '@nestjs/common';
 import { SearchFreightDto } from './dto/freight-freight.dto';
 
+const COMPANIES = [1, 2];
+
 @Injectable()
 export class FreightService {
   constructor(private melhorEnvioService: MelhorEnvioService) {}
@@ -11,6 +13,10 @@ export class FreightService {
       await this.melhorEnvioService.shipment.calculate(searchFreightDto);
 
     return freight.flatMap((v: any) => {
+      if (!COMPANIES.includes(v.company.id)) {
+        return [];
+      }
+
       if (v.error) {
         return [];
       }

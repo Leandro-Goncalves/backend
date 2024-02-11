@@ -50,6 +50,11 @@ export class CategoryController {
     return this.categoryService.findAll(establishmentUuid);
   }
 
+  @Get('admin')
+  findAllAuthenticatedAdmin(@Param('id') id: string) {
+    return this.categoryService.findAll(id, true);
+  }
+
   @Get(':id')
   findAll(@Param('id') id: string) {
     return this.categoryService.findAll(id);

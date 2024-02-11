@@ -11,6 +11,38 @@ import { createDeliveryDTO } from '@/jobs/createDelivery.job';
 import { CreateCheckoutTakeoutDto } from './dto/create-checkout-takeout.dto';
 import { Env } from '@/config/env';
 
+export const createVolumes = (
+  itens: { product: { uuid: string }; quantity: number }[],
+) => {
+  const volumes: any[] = [];
+
+  const addItem = (uuid: string) => {
+    const lastItem = volumes[volumes.length - 1];
+
+    if (lastItem === undefined || lastItem?.height === 20) {
+      volumes.push({
+        id: uuid,
+        quantity: 1,
+        width: 30,
+        height: 5,
+        length: 40,
+        weight: 0.5,
+      });
+    } else {
+      lastItem.weight += 0.5;
+      lastItem.height += 5;
+    }
+  };
+
+  itens.forEach(({ product, quantity }) => {
+    for (let i = 0; i < quantity; i++) {
+      addItem(product.uuid);
+    }
+  });
+
+  return volumes;
+};
+
 @Injectable()
 export class CheckoutService {
   constructor(
@@ -38,7 +70,8 @@ export class CheckoutService {
             ({ guid }) => guid === variantGuid,
           );
 
-          const price = variant.promotionalPrice ?? variant.price;
+          const price = variant.promotionalPrice || variant.price;
+
           return {
             id: product.uuid,
             title: product.name,
@@ -87,10 +120,29 @@ export class CheckoutService {
       },
     });
 
+    const finishedTakeout = await this.prisma.orderTakeout.findMany({
+      where: {
+        status: OrderStatus.finished,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    const finished = await this.prisma.order.findMany({
+      where: {
+        status: OrderStatus.finished,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
     return {
       delivery: parseProducts(delivery),
       takeout: parseProducts(takeout),
       cancelled: parseProducts(cancelled),
+      finished: parseProducts([...finished, ...finishedTakeout]),
     };
   }
 
@@ -156,17 +208,19 @@ export class CheckoutService {
       value: itemsTotal,
     });
 
+    const volumes = createVolumes(
+      createCheckoutDto.items.map((p) => ({
+        quantity: p.quantity,
+        product: {
+          uuid: p.productGuid,
+        },
+      })),
+    );
+
     const melhorEnvio = await this.melhorEnvioService.shipment.calculate({
       from: '13736815',
       to: address.cep,
-      products: createCheckoutDto.items.map((i) => ({
-        id: i.productGuid,
-        quantity: i.quantity,
-        width: 30,
-        height: 5,
-        length: 40,
-        weight: 10,
-      })),
+      volumes,
     });
 
     const freight = melhorEnvio.find(
@@ -184,6 +238,8 @@ export class CheckoutService {
         total,
         userId,
 
+        freightValue: Number(freight.price),
+
         freightId: createCheckoutDto.freightId,
         cep: address.cep,
         city: address.city,
@@ -198,6 +254,30 @@ export class CheckoutService {
     });
 
     return paymentLink.url;
+  }
+
+  async finishedOrder(orderId: string) {
+    const order = await this.getOrder(orderId);
+
+    if (order.type === 'delivery') {
+      return this.prisma.order.update({
+        where: {
+          guid: orderId,
+        },
+        data: {
+          status: OrderStatus.finished,
+        },
+      });
+    }
+
+    return this.prisma.orderTakeout.update({
+      where: {
+        guid: orderId,
+      },
+      data: {
+        status: OrderStatus.finished,
+      },
+    });
   }
 
   async cancelOrder(orderId: string) {
@@ -327,23 +407,27 @@ export class CheckoutService {
             select: {
               email: true,
               name: true,
+              phone: true,
             },
           },
         },
       };
 
       let products: any[] = [];
+      let productData: any;
 
       if (isDelivery) {
         const p = await this.prisma.order.update(orderData);
 
         if (!p) return;
         products = JSON.parse(p.products as string) as any[];
+        productData = p;
       } else {
         const p = await this.prisma.orderTakeout.update(orderData);
 
         if (!p) return;
         products = JSON.parse(p.products as string) as any[];
+        productData = p;
       }
 
       if (products.length === 0) return;
@@ -394,9 +478,14 @@ export class CheckoutService {
 
       await Promise.all(productsPromises);
 
+      console.log(productData);
+
       if (isDelivery) {
         this.createDeliveryJob.add(
-          { product: products },
+          {
+            product: productData,
+            feeValue: productData.freightValue,
+          },
           {
             backoff: Env.isDev ? 1000 * 10 : 1000 * 60 * 24, // dev 10s, prod 24h
             attempts: 30,

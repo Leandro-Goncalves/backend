@@ -24,6 +24,11 @@ export const Cart = (token: string) => {
         to: addToCartDTO.to,
         products: addToCartDTO.products,
         volumes: addToCartDTO.volumes,
+        options: {
+          insurance_value: addToCartDTO.insuranceValue,
+          non_commercial: true,
+          collect: true,
+        },
       });
     },
   };

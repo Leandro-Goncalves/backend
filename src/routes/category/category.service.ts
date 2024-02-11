@@ -55,7 +55,11 @@ export class CategoryService {
     });
   }
 
-  async findAll(establishmentUuid: string) {
+  async findAll(
+    establishmentUuid: string,
+    showDisableProducts: boolean = false,
+  ) {
+    console.log(showDisableProducts);
     return this.prisma.category
       .findMany({
         select: {
@@ -84,13 +88,15 @@ export class CategoryService {
           return {
             ...category,
             Products: category.Products.flatMap((p) => {
+              if (p.isActive === false && showDisableProducts === false)
+                return [];
               const totalItems = p.variants.reduce(
                 (acc, cur) =>
                   acc + cur.size.reduce((acc, cur) => acc + cur.quantity, 0),
                 0,
               );
 
-              if (totalItems === 0) {
+              if (totalItems === 0 && showDisableProducts === false) {
                 return [];
               }
               return [
@@ -102,7 +108,7 @@ export class CategoryService {
                       0,
                     );
 
-                    if (totalItems === 0) {
+                    if (totalItems === 0 && showDisableProducts === false) {
                       return [];
                     }
                     return [

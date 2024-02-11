@@ -9,4 +9,7 @@ export class RegisterUserDTO {
 
   @IsNotEmpty()
   password: string;
+
+  @IsNotEmpty()
+  phone: string;
 }
