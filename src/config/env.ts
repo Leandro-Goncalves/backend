@@ -64,4 +64,16 @@ export class Env {
   static get AssasToken(): string {
     return process.env.ASSAS_TOKEN;
   }
+
+  static get BunnyNetAccessKey(): string {
+    return process.env.BUNNY_NET_ACCESS_KEY;
+  }
+
+  static get BunnyNetStorageZoneName(): string {
+    return process.env.BUNNY_NET_STORAGE_ZONE_NAME;
+  }
+
+  static get BunnyNetStorageZonePassword(): string {
+    return process.env.BUNNY_NET_STORAGE_ZONE_PASSWORD;
+  }
 }

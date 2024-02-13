@@ -20,10 +20,20 @@ import { AssasModule } from './modules/assas/assas.module';
 import { S3Service } from './services/s3/s3.service';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { BunnyCDNModule } from '@intelrug/nestjs-bunnycdn';
 
 @Global()
 @Module({
   imports: [
+    BunnyCDNModule.forRoot({
+      apiAccessKey: Env.BunnyNetAccessKey,
+      storageZones: [
+        {
+          name: Env.BunnyNetStorageZoneName,
+          accessKey: Env.BunnyNetStorageZonePassword,
+        },
+      ],
+    }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..'),
       renderPath: 'imgs',

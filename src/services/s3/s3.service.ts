@@ -1,33 +1,21 @@
 import { Injectable } from '@nestjs/common';
-import * as fs from 'fs';
-import { promisify } from 'util';
+import { InjectBunnyCDN } from '@intelrug/nestjs-bunnycdn';
+import { BunnyCDN } from '@intelrug/bunnycdn';
 
 interface CreateParams {
   Key: string;
   Body: Buffer;
 }
 
-const PATH = './imgs';
-
 @Injectable()
 export class S3Service {
-  checkIfFileOrDirectoryExists(path: string) {
-    return fs.existsSync(path);
-  }
+  constructor(@InjectBunnyCDN() private readonly bunny: BunnyCDN) {}
 
   async create(paramns: CreateParams) {
-    if (!this.checkIfFileOrDirectoryExists(PATH)) {
-      fs.mkdirSync(PATH);
-    }
-
-    const writeFile = promisify(fs.writeFile);
-
-    return await writeFile(`${PATH}/${paramns.Key}`, paramns.Body, 'utf8');
+    return this.bunny.storage.update('cacau', paramns.Key, paramns.Body);
   }
 
   async delete(key: string) {
-    const unlink = promisify(fs.unlink);
-
-    return await unlink(`${PATH}/${key}`);
+    return this.bunny.storage.delete('cacau', key);
   }
 }
