@@ -40,7 +40,7 @@ export class HttpInterceptor implements NestInterceptor {
       tap((data) => {
         this.logger.debug(`${method} ${url} [${res.statusCode}]`);
         if (!data) return;
-        return typeof data === 'object' ? removeEmpty(data) : data;
+        // return typeof data === 'object' ? removeEmpty(data) : data;
       }),
     );
   }
