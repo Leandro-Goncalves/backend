@@ -18,4 +18,8 @@ export class S3Service {
   async delete(key: string) {
     return this.bunny.storage.delete('cacau', key);
   }
+
+  async get(key: string) {
+    return this.bunny.storage.getFile('cacau', key);
+  }
 }

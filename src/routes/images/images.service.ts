@@ -17,6 +17,10 @@ export class ImagesService {
     return this.s3Service.delete(key);
   };
 
+  async download(imageId: string) {
+    return this.s3Service.get(imageId);
+  }
+
   async create(imageFile: Express.Multer.File, imageId: string) {
     return this.s3Upload(imageFile, imageId);
   }
