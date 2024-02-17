@@ -70,7 +70,9 @@ export class CheckoutService {
             ({ guid }) => guid === variantGuid,
           );
 
-          const price = variant.promotionalPrice || variant.price;
+          console.log(product.variants);
+
+          const price = variant?.promotionalPrice || variant.price;
 
           return {
             id: product.uuid,
@@ -196,17 +198,12 @@ export class CheckoutService {
   async create(userId: string, createCheckoutDto: CreateCheckoutDto) {
     const productFormatted = await this.formatItems(createCheckoutDto.items);
     const address = createCheckoutDto.to;
+    const isFixedFee = createCheckoutDto.freightId === 10000;
 
     const itemsTotal = productFormatted.reduce(
       (acc, item) => acc + item.unit_price * item.quantity,
       0,
     );
-
-    const paymentLink = await this.assasService.paymentLink({
-      name: 'Cacau Store',
-      description: 'Cacau Store',
-      value: itemsTotal,
-    });
 
     const volumes = createVolumes(
       createCheckoutDto.items.map((p) => ({
@@ -217,19 +214,37 @@ export class CheckoutService {
       })),
     );
 
-    const melhorEnvio = await this.melhorEnvioService.shipment.calculate({
-      from: '13736815',
-      to: address.cep,
-      volumes,
-    });
+    let freight: {
+      id: number;
+      price: number;
+    };
 
-    const freight = melhorEnvio.find(
-      ({ id }) => id === createCheckoutDto.freightId,
-    );
+    if (isFixedFee) {
+      freight = {
+        id: createCheckoutDto.freightId,
+        price: 5,
+      };
+    } else {
+      const melhorEnvio = await this.melhorEnvioService.shipment.calculate({
+        from: '13736815',
+        to: address.cep,
+        volumes,
+      });
+
+      freight = melhorEnvio.find(
+        ({ id }) => id === createCheckoutDto.freightId,
+      );
+    }
 
     if (!freight) return;
 
     const total = itemsTotal + Number(freight.price);
+
+    const paymentLink = await this.assasService.paymentLink({
+      name: 'Cacau Store',
+      description: 'Cacau Store',
+      value: total,
+    });
 
     await this.prisma.order.create({
       data: {
@@ -250,6 +265,7 @@ export class CheckoutService {
         complement: address.complement,
         cpf: address.cpf,
         number: address.number,
+        isFixedFee,
       },
     });
 
@@ -478,9 +494,8 @@ export class CheckoutService {
 
       await Promise.all(productsPromises);
 
-      console.log(productData);
-
-      if (isDelivery) {
+      if (isDelivery && productData.isFixedFee === false) {
+        console.log('naaao');
         this.createDeliveryJob.add(
           {
             product: productData,

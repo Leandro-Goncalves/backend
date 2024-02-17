@@ -4,6 +4,7 @@ import { MelhorEnvioService } from '@/modules/melhor-envio/melhor-envio.service'
 import { ProductFormatted } from '@/routes/checkout/dto/product-formatted.dto';
 import { createVolumes } from '@/routes/checkout/checkout.service';
 import { PrismaService } from '@/prisma/prisma.service';
+import { SizesArray } from '@/utils/sizesArray';
 
 export type createDeliveryDTO = {
   product: any;
@@ -25,11 +26,16 @@ export class CreateDeliveryJob {
       product.products as string,
     ) as ProductFormatted[];
 
-    const formattedProducts = productsParsed.map((p) => ({
-      name: p.title,
-      quantity: String(p.quantity),
-      unitary_value: String(p.unit_price),
-    }));
+    const formattedProducts = productsParsed.map((p) => {
+      console.log(p);
+      const size = SizesArray.find((s) => s.guid === (p as any).sizeGuid);
+
+      return {
+        name: `(${size.name}) ${p.title} - ${(p as any).variant.name}`,
+        quantity: String(p.quantity),
+        unitary_value: String(p.unit_price),
+      };
+    });
 
     const totalValue = formattedProducts.reduce(
       (acc, item) => acc + Number(item.unitary_value) * Number(item.quantity),

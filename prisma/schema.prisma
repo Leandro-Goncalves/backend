@@ -156,6 +156,7 @@ model Order {
   complement   String?
   cpf          String
   tracking     String?
+  isFixedFee   Boolean     @default(false)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 }

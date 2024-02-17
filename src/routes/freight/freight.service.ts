@@ -1,6 +1,8 @@
 import { MelhorEnvioService } from '@/modules/melhor-envio/melhor-envio.service';
 import { Injectable } from '@nestjs/common';
 import { SearchFreightDto } from './dto/freight-freight.dto';
+import { default as cepType } from 'cep-promise';
+import * as getCEP from 'cep-promise';
 
 const COMPANIES = [1, 2];
 
@@ -9,6 +11,27 @@ export class FreightService {
   constructor(private melhorEnvioService: MelhorEnvioService) {}
 
   async get(searchFreightDto: SearchFreightDto) {
+    const gepPromise = getCEP as any as typeof cepType;
+    const data = await gepPromise(searchFreightDto.to);
+
+    if (data.city === 'Mococa') {
+      return [
+        {
+          id: 10000,
+          name: 'Mococa/SP',
+          price: 5,
+          company: {
+            name: 'Frete fixo',
+          },
+          range: {
+            min: 1,
+            max: 2,
+            formatted: `chega entre 1 a 2 dias úteis`,
+          },
+        },
+      ];
+    }
+
     const freight =
       await this.melhorEnvioService.shipment.calculate(searchFreightDto);
 
