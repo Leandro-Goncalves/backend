@@ -21,6 +21,7 @@ import { S3Service } from './services/s3/s3.service';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { BunnyCDNModule } from '@intelrug/nestjs-bunnycdn';
+import { CouponModule } from './routes/coupon/coupon.module';
 
 @Global()
 @Module({
@@ -67,6 +68,7 @@ import { BunnyCDNModule } from '@intelrug/nestjs-bunnycdn';
       global: true,
       token: Env.MelhorEnvioToken,
     }),
+    CouponModule,
   ],
   controllers: [],
   providers: [

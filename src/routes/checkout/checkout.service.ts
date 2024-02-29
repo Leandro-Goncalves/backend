@@ -10,6 +10,8 @@ import { Queue } from 'bull';
 import { createDeliveryDTO } from '@/jobs/createDelivery.job';
 import { CreateCheckoutTakeoutDto } from './dto/create-checkout-takeout.dto';
 import { Env } from '@/config/env';
+import { DiscountCheckoutService } from './discount-checkout/discount-checkout.service';
+import { Errors } from '@/errors';
 
 export const createVolumes = (
   itens: { product: { uuid: string }; quantity: number }[],
@@ -51,6 +53,7 @@ export class CheckoutService {
     private melhorEnvioService: MelhorEnvioService,
     @InjectQueue('create-delivery-job')
     private createDeliveryJob: Queue<createDeliveryDTO>,
+    private discountCheckoutService: DiscountCheckoutService,
   ) {}
 
   private async formatItems(items: Items[]): Promise<ProductFormatted[]> {
@@ -175,18 +178,31 @@ export class CheckoutService {
       0,
     );
 
+    const couponDiscount =
+      await this.discountCheckoutService.getCouponDiscountValue(
+        userId,
+        itemsTotal,
+        createCheckoutDto.couponCode,
+      );
+
+    const total = itemsTotal - couponDiscount.value;
+
+    if (total < 5) {
+      throw Errors.Products.InsufficientValue;
+    }
+
     const paymentLink = await this.assasService.paymentLink({
       name: 'Cacau Store',
       description: 'Cacau Store',
-      value: itemsTotal,
+      value: total,
     });
 
     await this.prisma.orderTakeout.create({
       data: {
         guid: paymentLink.id,
         products: JSON.stringify(productFormatted),
-        cpf: createCheckoutDto.cpf,
-        total: itemsTotal,
+        total,
+        coupomGuid: couponDiscount.guid,
         userId,
         paymentLink: paymentLink.url,
       },
@@ -238,7 +254,14 @@ export class CheckoutService {
 
     if (!freight) return;
 
-    const total = itemsTotal + Number(freight.price);
+    const couponDiscount =
+      await this.discountCheckoutService.getCouponDiscountValue(
+        userId,
+        itemsTotal,
+        createCheckoutDto.couponCode,
+      );
+
+    const total = itemsTotal + Number(freight.price) - couponDiscount.value;
 
     const paymentLink = await this.assasService.paymentLink({
       name: 'Cacau Store',
@@ -255,6 +278,8 @@ export class CheckoutService {
 
         freightValue: Number(freight.price),
 
+        coupomGuid: couponDiscount.guid,
+
         freightId: createCheckoutDto.freightId,
         cep: address.cep,
         city: address.city,
@@ -263,7 +288,6 @@ export class CheckoutService {
         street: address.street,
         paymentLink: paymentLink.url,
         complement: address.complement,
-        cpf: address.cpf,
         number: address.number,
         isFixedFee,
       },
@@ -419,6 +443,7 @@ export class CheckoutService {
           status: OrderStatus.success,
         },
         include: {
+          Coupom: true,
           user: {
             select: {
               email: true,
@@ -494,8 +519,32 @@ export class CheckoutService {
 
       await Promise.all(productsPromises);
 
+      if (productData.Coupom && !productData.Coupom.isUnlimited) {
+        if (productData.Coupom.quantity > 0) {
+          await this.prisma.coupom.update({
+            where: {
+              code: productData.Coupom.code,
+            },
+            data: {
+              quantity: {
+                decrement: 1,
+              },
+            },
+          });
+        }
+
+        if (productData.Coupom.quantity === 1) {
+          await this.prisma.coupom.update({
+            where: {
+              code: productData.Coupom.code,
+            },
+            data: {
+              isActive: false,
+            },
+          });
+        }
+      }
       if (isDelivery && productData.isFixedFee === false) {
-        console.log('naaao');
         this.createDeliveryJob.add(
           {
             product: productData,

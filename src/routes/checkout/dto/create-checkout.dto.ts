@@ -1,4 +1,10 @@
-import { IsArray, IsInt, IsString, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsInt,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 
 export class Items {
   @IsInt()
@@ -35,9 +41,6 @@ class Address {
 
   @IsString()
   complement: string;
-
-  @IsString()
-  cpf: string;
 }
 
 export class CreateCheckoutDto {
@@ -45,6 +48,10 @@ export class CreateCheckoutDto {
   to: Address;
 
   freightId: number;
+
+  @IsString()
+  @IsOptional()
+  couponCode?: string;
 
   @IsArray()
   @ValidateNested({ each: true })

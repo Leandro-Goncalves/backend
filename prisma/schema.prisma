@@ -18,6 +18,39 @@ model Establishment {
   Category     Category[]
   Products     Products[]
   carousel     Carousel[]
+  cupom        Coupom[]
+}
+
+model Coupom {
+  guid              String         @id @default(uuid())
+  isActive          Boolean        @default(false)
+  code              String         @unique
+  cupomType         CupomType
+  discountValue     Float
+  discountType      DiscountType
+  minimumValue      Float?
+  maxDiscount       Float?
+  initialDate       DateTime?
+  finalDate         DateTime?
+  quantity          Int
+  isUnlimited       Boolean        @default(false)
+  orders            Order[]
+  OrderTakeout      OrderTakeout[]
+  Establishment     Establishment? @relation(fields: [establishmentUuid], references: [uuid])
+  establishmentUuid String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+}
+
+enum DiscountType {
+  PERCENTAGE
+  AMOUNT
+}
+
+enum CupomType {
+  GENERAL
+  UNIQUE
+  FIRST
 }
 
 model Category {
@@ -93,6 +126,7 @@ model Image {
 model User {
   uuid         String         @id @default(uuid())
   email        String         @unique
+  cpf          String         @unique
   name         String
   phone        String
   password     String
@@ -122,8 +156,9 @@ model OrderTakeout {
   status      OrderStatus @default(pending)
   user        User        @relation(fields: [userId], references: [uuid], onDelete: Cascade, onUpdate: Cascade)
   userId      String
-  cpf         String
   paymentLink String
+  Coupom      Coupom?     @relation(fields: [coupomGuid], references: [guid])
+  coupomGuid  String?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 }
@@ -154,11 +189,12 @@ model Order {
   number       String
   cep          String
   complement   String?
-  cpf          String
   tracking     String?
   isFixedFee   Boolean     @default(false)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
+  Coupom       Coupom?     @relation(fields: [coupomGuid], references: [guid])
+  coupomGuid   String?
 }
 
 enum OrderStatus {

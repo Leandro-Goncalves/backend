@@ -33,6 +33,16 @@ export class UsersService {
       throw Errors.UserAlreadyExists;
     }
 
+    const userCpf = await this.prisma.user.findUnique({
+      where: {
+        cpf: nUser.cpf,
+      },
+    });
+
+    if (userCpf) {
+      throw Errors.User.CPFAlreadyRegistered;
+    }
+
     newUser.password = await this.bcryptService.hash(newUser.password);
 
     await this.prisma.user.create({

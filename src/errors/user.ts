@@ -11,3 +11,7 @@ export const UserOrEmailNotRegisteredError = new UnauthorizedException(
 export const EmailNotRegisteredError = new UnauthorizedException(
   'Email invalido',
 );
+
+export const CPFAlreadyRegisteredError = new UnauthorizedException(
+  'CPF ja registrado',
+);

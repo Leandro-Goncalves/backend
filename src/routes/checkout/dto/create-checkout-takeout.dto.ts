@@ -1,4 +1,10 @@
-import { IsArray, IsInt, IsString, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsInt,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 
 class Items {
   @IsInt()
@@ -16,7 +22,8 @@ class Items {
 
 export class CreateCheckoutTakeoutDto {
   @IsString()
-  cpf: string;
+  @IsOptional()
+  couponCode?: string;
 
   @IsArray()
   @ValidateNested({ each: true })
