@@ -46,6 +46,22 @@ export class CouponService {
     return this.prisma.coupom.findUnique({
       where: {
         code,
+      },
+      select: {
+        code: true,
+        cupomType: true,
+        discountValue: true,
+        discountType: true,
+        minimumValue: true,
+        maxDiscount: true,
+      },
+    });
+  }
+
+  getCouponWithFilters(code: string) {
+    return this.prisma.coupom.findUnique({
+      where: {
+        code,
         isActive: true,
         OR: [
           {

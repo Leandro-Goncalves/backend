@@ -26,7 +26,7 @@ export class FreightService {
           range: {
             min: 1,
             max: 2,
-            formatted: `chega entre 1 a 2 dias úteis`,
+            formatted: `chega em algumas horas.`,
           },
         },
       ];

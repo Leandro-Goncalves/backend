@@ -66,7 +66,7 @@ export class CouponController {
 
   @Get(':couponCode')
   async getCoupon(@Param('couponCode') code: string) {
-    const coupon = await this.couponService.getCoupon(code);
+    const coupon = await this.couponService.getCouponWithFilters(code);
 
     if (!coupon) {
       throw Errors.Coupon.NotFound;

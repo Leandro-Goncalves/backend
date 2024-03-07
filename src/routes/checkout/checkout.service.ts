@@ -355,9 +355,32 @@ export class CheckoutService {
       },
     });
 
+    const ordersTakeoutToCancel = await this.prisma.orderTakeout.findMany({
+      where: {
+        userId,
+        status: OrderStatus.pending,
+        createdAt: {
+          lte: new Date(new Date().getTime() - 30 * 60 * 1000),
+        },
+      },
+    });
+
     await Promise.all(
       ordersToCancel.map(async (order) => {
         return this.prisma.order.update({
+          where: {
+            guid: order.guid,
+          },
+          data: {
+            status: OrderStatus.cancelled,
+          },
+        });
+      }),
+    );
+
+    await Promise.all(
+      ordersTakeoutToCancel.map(async (order) => {
+        return this.prisma.orderTakeout.update({
           where: {
             guid: order.guid,
           },
@@ -395,7 +418,14 @@ export class CheckoutService {
       products: JSON.parse(o.products as string),
     }));
 
-    return [...takeoutOrdersFormatted, ...ordersFormatted];
+    const fullOrders = [...ordersFormatted, ...takeoutOrdersFormatted];
+
+    const fullOrdersOrderByDate = fullOrders.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+
+    return fullOrdersOrderByDate;
   }
 
   async getOrder(orderId: string) {
