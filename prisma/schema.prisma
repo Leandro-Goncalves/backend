@@ -15,6 +15,8 @@ model Establishment {
   alert        String?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
+  icon         String?
+  themeGuid    String?
   Category     Category[]
   Products     Products[]
   carousel     Carousel[]
@@ -65,10 +67,23 @@ model Category {
 }
 
 model Carousel {
+  uuid              String        @id @default(uuid())
   establishment     Establishment @relation(fields: [establishmentUuid], references: [uuid])
   establishmentUuid String
   name              String
-  uuid              String        @id @default(uuid())
+  link              String?
+  isActive          Boolean       @default(false)
+  position          Int
+  url               String
+}
+
+model Fabric {
+  guid        String  @id @default(uuid())
+  name        String
+  description String  @db.LongText
+  isActive    Boolean @default(false)
+  url         String
+  position    Int
 }
 
 model Products {
@@ -202,4 +217,21 @@ enum OrderStatus {
   success
   cancelled
   finished
+}
+
+model Doubts {
+  guid     String @id @default(uuid())
+  question String @db.LongText
+  answer   String @db.LongText
+  position Int
+}
+
+model Block {
+  guid        String  @id @default(uuid())
+  name        String
+  description String
+  link        String
+  url         String
+  position    Int
+  isActive    Boolean @default(false)
 }

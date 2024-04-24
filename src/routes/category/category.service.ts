@@ -59,7 +59,6 @@ export class CategoryService {
     establishmentUuid: string,
     showDisableProducts: boolean = false,
   ) {
-    console.log(showDisableProducts);
     return this.prisma.category
       .findMany({
         select: {

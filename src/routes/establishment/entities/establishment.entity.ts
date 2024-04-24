@@ -23,4 +23,13 @@ export class Establishment implements EstablishmentType {
 
   @IsString()
   updatedAt: Date;
+
+  @IsUUID()
+  themeGuid: string;
+
+  @IsString()
+  icon: string;
+
+  @IsUUID()
+  blockGuid: string;
 }

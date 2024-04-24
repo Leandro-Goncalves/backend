@@ -22,6 +22,9 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { BunnyCDNModule } from '@intelrug/nestjs-bunnycdn';
 import { CouponModule } from './routes/coupon/coupon.module';
+import { DoubtsModule } from './routes/doubts/doubts.module';
+import { FabricsModule } from './routes/fabrics/fabrics.module';
+import { BlockModule } from './routes/block/block.module';
 
 @Global()
 @Module({
@@ -69,6 +72,9 @@ import { CouponModule } from './routes/coupon/coupon.module';
       token: Env.MelhorEnvioToken,
     }),
     CouponModule,
+    DoubtsModule,
+    FabricsModule,
+    BlockModule,
   ],
   controllers: [],
   providers: [

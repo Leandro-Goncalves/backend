@@ -3,5 +3,5 @@ import { Establishment } from '../entities/establishment.entity';
 
 export class UpdateEstablishmentDto extends PickType(
   PartialType(Establishment),
-  ['phone', 'description', 'alert'],
+  ['phone', 'description', 'alert', 'themeGuid', 'blockGuid'],
 ) {}
