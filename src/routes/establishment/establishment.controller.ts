@@ -15,6 +15,13 @@ import { UploadedFileImage } from '@/utils/UploadedFileImage';
 export class EstablishmentController {
   constructor(private readonly establishmentService: EstablishmentService) {}
 
+  @Get('/status4')
+  status() {
+    return {
+      ok: '14',
+    };
+  }
+
   @Get(':uuid')
   findOne(@Param('uuid') uuid: string) {
     return this.establishmentService.findOne(uuid);

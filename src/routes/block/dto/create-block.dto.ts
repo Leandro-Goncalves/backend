@@ -5,4 +5,5 @@ export class CreateBlockDto extends PickType(Block, [
   'name',
   'description',
   'link',
+  'buttonText',
 ] as const) {}

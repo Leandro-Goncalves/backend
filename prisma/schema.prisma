@@ -74,7 +74,7 @@ model Carousel {
   link              String?
   isActive          Boolean       @default(false)
   position          Int
-  url               String
+  url               String        @db.LongText
 }
 
 model Fabric {
@@ -82,7 +82,7 @@ model Fabric {
   name        String
   description String  @db.LongText
   isActive    Boolean @default(false)
-  url         String
+  url         String  @db.LongText
   position    Int
 }
 
@@ -229,9 +229,9 @@ model Doubts {
 model Block {
   guid        String  @id @default(uuid())
   name        String
-  description String
+  description String  @db.LongText
   link        String
-  url         String
   position    Int
+  buttonText  String
   isActive    Boolean @default(false)
 }

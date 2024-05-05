@@ -22,4 +22,7 @@ export class Block implements Partial<IBlock> {
 
   @IsString()
   url: string;
+
+  @IsString()
+  buttonText: string;
 }

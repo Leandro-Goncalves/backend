@@ -6,28 +6,21 @@ import {
   Patch,
   Param,
   Delete,
-  UseInterceptors,
 } from '@nestjs/common';
 import { BlockService } from './block.service';
 import { CreateBlockDto } from './dto/create-block.dto';
 import { UpdateBlockDto } from './dto/update-block.dto';
 import { UseAuth } from '@/auth/roles.decorator';
 import { Roles } from '../users/entities/user.entity';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { UploadedFileImage } from '@/utils/UploadedFileImage';
 
 @Controller('block')
 export class BlockController {
   constructor(private readonly blockService: BlockService) {}
 
   @UseAuth([Roles.ADMIN])
-  @UseInterceptors(FileInterceptor('image'))
   @Post()
-  create(
-    @Body() createBlockDto: CreateBlockDto,
-    @UploadedFileImage() image: Express.Multer.File,
-  ) {
-    return this.blockService.create(image, createBlockDto);
+  create(@Body() createBlockDto: CreateBlockDto) {
+    return this.blockService.create(createBlockDto);
   }
 
   @Get('/active')
@@ -50,13 +43,8 @@ export class BlockController {
 
   @UseAuth([Roles.ADMIN])
   @Patch(':guid')
-  @UseInterceptors(FileInterceptor('image'))
-  update(
-    @Param('guid') guid: string,
-    @Body() updateBlockDto: UpdateBlockDto,
-    @UploadedFileImage(false) image: Express.Multer.File,
-  ) {
-    return this.blockService.update(guid, updateBlockDto, image);
+  update(@Param('guid') guid: string, @Body() updateBlockDto: UpdateBlockDto) {
+    return this.blockService.update(guid, updateBlockDto);
   }
 
   @UseAuth([Roles.ADMIN])

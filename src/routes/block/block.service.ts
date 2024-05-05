@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CreateBlockDto } from './dto/create-block.dto';
 import { UpdateBlockDto } from './dto/update-block.dto';
-import { randomUUID } from 'crypto';
 import { PrismaService } from '@/prisma/prisma.service';
 import { ImagesService } from '../images/images.service';
 
@@ -22,17 +21,12 @@ export class BlockService {
       .then((blocks) => blocks[0] ?? {});
   }
 
-  async create(image: Express.Multer.File, createBlockDto: CreateBlockDto) {
-    const fileName = `${randomUUID()}-${image.originalname}`;
+  async create(createBlockDto: CreateBlockDto) {
     const blockItens = await this.prisma.block.count();
-
-    await this.imagesService.create(image, fileName);
-
     return this.prisma.block.create({
       data: {
         ...createBlockDto,
         position: blockItens + 1,
-        url: fileName,
       },
     });
   }
@@ -47,40 +41,18 @@ export class BlockService {
         name: true,
         description: true,
         link: true,
-        url: true,
         position: true,
         isActive: true,
+        buttonText: true,
       },
     });
   }
 
-  async update(
-    guid: string,
-    updateBlockDto: UpdateBlockDto,
-    image?: Express.Multer.File,
-  ) {
-    const block = await this.prisma.block.update({
+  async update(guid: string, updateBlockDto: UpdateBlockDto) {
+    return this.prisma.block.update({
       where: { guid },
       data: updateBlockDto,
     });
-
-    if (image) {
-      await this.imagesService.remove(block.url);
-      const fileName = `${randomUUID()}-${image.originalname}`;
-      await Promise.all([
-        this.imagesService.create(image, fileName),
-        this.prisma.block.update({
-          where: { guid },
-          data: {
-            url: fileName,
-          },
-        }),
-      ]);
-
-      block.url = fileName;
-    }
-
-    return block;
   }
 
   async setActive(guid: string, isActive: boolean) {
@@ -116,12 +88,10 @@ export class BlockService {
   }
 
   async remove(guid: string) {
-    const removedImage = await this.prisma.block.delete({
+    return this.prisma.block.delete({
       where: {
         guid,
       },
     });
-
-    await this.imagesService.remove(removedImage.url);
   }
 }
