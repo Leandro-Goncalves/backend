@@ -21,6 +21,17 @@ model Establishment {
   Products     Products[]
   carousel     Carousel[]
   cupom        Coupom[]
+  feedback     Feedback[]
+  storyText    String?    @db.LongText
+  storyImage   String?
+}
+
+model StoreCarousel {
+  uuid     String  @id @default(uuid())
+  title    String
+  url      String  @db.LongText
+  isActive Boolean @default(false)
+  position Int
 }
 
 model Coupom {
@@ -72,6 +83,16 @@ model Carousel {
   establishmentUuid String
   name              String
   link              String?
+  isActive          Boolean       @default(false)
+  position          Int
+  url               String        @db.LongText
+}
+
+model Feedback {
+  uuid              String        @id @default(uuid())
+  establishment     Establishment @relation(fields: [establishmentUuid], references: [uuid])
+  establishmentUuid String
+  name              String
   isActive          Boolean       @default(false)
   position          Int
   url               String        @db.LongText
@@ -216,6 +237,7 @@ enum OrderStatus {
   pending
   success
   cancelled
+  expired
   finished
 }
 

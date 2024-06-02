@@ -4,6 +4,7 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { SelectThemeDto } from './dto/select-theme.dot';
 import { randomUUID } from 'crypto';
 import { ImagesService } from '../images/images.service';
+import { UpdateStoryDto } from './dto/upsate-story.dto';
 
 @Injectable()
 export class EstablishmentService {
@@ -16,6 +17,20 @@ export class EstablishmentService {
     return this.prisma.establishment.findUnique({
       where: {
         uuid,
+      },
+      include: {
+        feedback: {
+          where: {
+            isActive: true,
+          },
+          orderBy: {
+            position: 'asc',
+          },
+          select: {
+            uuid: true,
+            url: true,
+          },
+        },
       },
     });
   }
@@ -57,6 +72,41 @@ export class EstablishmentService {
       ]);
 
       establishment.icon = fileName;
+    }
+
+    return establishment;
+  }
+
+  async updateStory(
+    uuid: string,
+    updateStoryDto: UpdateStoryDto,
+    storyImage?: Express.Multer.File,
+  ) {
+    const establishment = await this.prisma.establishment.update({
+      where: {
+        uuid,
+      },
+      data: {
+        storyText: updateStoryDto.storyText,
+      },
+    });
+
+    if (storyImage) {
+      if (establishment.storyImage) {
+        await this.imagesService.remove(establishment.storyImage);
+      }
+      const fileName = `${randomUUID()}-${storyImage.originalname}`;
+      await Promise.all([
+        this.imagesService.create(storyImage, fileName),
+        this.prisma.establishment.update({
+          where: { uuid },
+          data: {
+            storyImage: fileName,
+          },
+        }),
+      ]);
+
+      establishment.storyImage = fileName;
     }
 
     return establishment;

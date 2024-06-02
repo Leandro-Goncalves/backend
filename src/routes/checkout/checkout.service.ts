@@ -169,8 +169,15 @@ export class CheckoutService {
 
   async createTakeout(
     userId: string,
+    establishmentUuid: string,
     createCheckoutDto: CreateCheckoutTakeoutDto,
   ) {
+    const establishment = await this.prisma.establishment.findUnique({
+      where: {
+        uuid: establishmentUuid,
+      },
+    });
+
     const productFormatted = await this.formatItems(createCheckoutDto.items);
 
     const itemsTotal = productFormatted.reduce(
@@ -195,6 +202,7 @@ export class CheckoutService {
       name: 'Cacau Store',
       description: 'Cacau Store',
       value: total,
+      maxInstallmentCount: establishment.installments,
     });
 
     await this.prisma.orderTakeout.create({
@@ -211,7 +219,11 @@ export class CheckoutService {
     return paymentLink.url;
   }
 
-  async create(userId: string, createCheckoutDto: CreateCheckoutDto) {
+  async create(
+    userId: string,
+    establishmentUuid: string,
+    createCheckoutDto: CreateCheckoutDto,
+  ) {
     const productFormatted = await this.formatItems(createCheckoutDto.items);
     const address = createCheckoutDto.to;
     const isFixedFee = createCheckoutDto.freightId === 10000;
@@ -263,10 +275,17 @@ export class CheckoutService {
 
     const total = itemsTotal + Number(freight.price) - couponDiscount.value;
 
+    const establishment = await this.prisma.establishment.findUnique({
+      where: {
+        uuid: establishmentUuid,
+      },
+    });
+
     const paymentLink = await this.assasService.paymentLink({
       name: 'Cacau Store',
       description: 'Cacau Store',
       value: total,
+      maxInstallmentCount: establishment.installments,
     });
 
     await this.prisma.order.create({
@@ -372,7 +391,7 @@ export class CheckoutService {
             guid: order.guid,
           },
           data: {
-            status: OrderStatus.cancelled,
+            status: OrderStatus.expired,
           },
         });
       }),
@@ -385,7 +404,7 @@ export class CheckoutService {
             guid: order.guid,
           },
           data: {
-            status: OrderStatus.cancelled,
+            status: OrderStatus.expired,
           },
         });
       }),

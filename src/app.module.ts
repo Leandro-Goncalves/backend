@@ -25,6 +25,9 @@ import { CouponModule } from './routes/coupon/coupon.module';
 import { DoubtsModule } from './routes/doubts/doubts.module';
 import { FabricsModule } from './routes/fabrics/fabrics.module';
 import { BlockModule } from './routes/block/block.module';
+import { FeedbacksModule } from './routes/feedbacks/feedbacks.module';
+import { StoreCarouselModule } from './routes/store-carousel/store-carousel.module';
+import { ReportsModule } from './routes/reports/reports.module';
 
 @Global()
 @Module({
@@ -75,6 +78,9 @@ import { BlockModule } from './routes/block/block.module';
     DoubtsModule,
     FabricsModule,
     BlockModule,
+    FeedbacksModule,
+    StoreCarouselModule,
+    ReportsModule,
   ],
   controllers: [],
   providers: [

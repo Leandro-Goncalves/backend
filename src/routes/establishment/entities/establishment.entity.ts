@@ -32,4 +32,10 @@ export class Establishment implements EstablishmentType {
 
   @IsUUID()
   blockGuid: string;
+
+  @IsString()
+  storyText: string;
+
+  @IsString()
+  storyImage: string;
 }

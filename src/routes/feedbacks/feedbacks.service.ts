@@ -1,70 +1,39 @@
 import { Injectable } from '@nestjs/common';
+import { CreateFeedbackDto } from './dto/create-feedback.dto';
+import { UpdateFeedbackDto } from './dto/update-feedback.dto';
 import { PrismaService } from '@/prisma/prisma.service';
 import { ImagesService } from '../images/images.service';
 import { randomUUID } from 'crypto';
-import { UpdateCarouselDto } from './dto/update-carousel.dto';
 
 @Injectable()
-export class CarouselService {
+export class FeedbacksService {
   constructor(
     private prisma: PrismaService,
     private imagesService: ImagesService,
   ) {}
+
   async create(
     establishmentUuid: string,
     image: Express.Multer.File,
-    name: string,
-    link?: string,
+    createFeedbackDto: CreateFeedbackDto,
   ) {
     const fileName = `${randomUUID()}-${image.originalname}`;
-    const carouselItens = await this.findAll(establishmentUuid, true);
+    const feedbackItens = await this.findAll(establishmentUuid, true);
 
     await this.imagesService.create(image, fileName);
 
-    return this.prisma.carousel.create({
+    return this.prisma.feedback.create({
       data: {
+        ...createFeedbackDto,
         establishmentUuid,
-        name,
-        link,
-        position: carouselItens.length + 1,
+        position: feedbackItens.length + 1,
         url: fileName,
       },
     });
   }
 
-  async update(
-    guid: string,
-    updateCarouselDto: UpdateCarouselDto,
-    image?: Express.Multer.File,
-  ) {
-    const carousel = await this.prisma.carousel.update({
-      where: {
-        uuid: guid,
-      },
-      data: updateCarouselDto,
-    });
-
-    if (image) {
-      await this.imagesService.remove(carousel.url);
-      const fileName = `${randomUUID()}-${image.originalname}`;
-
-      await this.imagesService.create(image, fileName);
-
-      return this.prisma.carousel.update({
-        where: {
-          uuid: guid,
-        },
-        data: {
-          url: fileName,
-        },
-      });
-    }
-
-    return carousel;
-  }
-
   async findAll(establishmentGuid: string, showDisable: boolean = false) {
-    return this.prisma.carousel.findMany({
+    return this.prisma.feedback.findMany({
       where: {
         establishmentUuid: establishmentGuid,
         isActive: showDisable ? undefined : true,
@@ -75,15 +44,45 @@ export class CarouselService {
       select: {
         isActive: showDisable ? true : undefined,
         uuid: true,
-        link: true,
         name: true,
         url: true,
       },
     });
   }
 
+  async update(
+    guid: string,
+    updateFeedbackDto: UpdateFeedbackDto,
+    image?: Express.Multer.File,
+  ) {
+    const feedback = await this.prisma.feedback.update({
+      where: {
+        uuid: guid,
+      },
+      data: updateFeedbackDto,
+    });
+
+    if (image) {
+      await this.imagesService.remove(feedback.url);
+      const fileName = `${randomUUID()}-${image.originalname}`;
+
+      await this.imagesService.create(image, fileName);
+
+      return this.prisma.feedback.update({
+        where: {
+          uuid: guid,
+        },
+        data: {
+          url: fileName,
+        },
+      });
+    }
+
+    return feedback;
+  }
+
   async remove(guid: string) {
-    const removedImage = await this.prisma.carousel.delete({
+    const removedImage = await this.prisma.feedback.delete({
       where: {
         uuid: guid,
       },
@@ -99,12 +98,12 @@ export class CarouselService {
     }));
 
     return await Promise.all(
-      positionsMap.map((item) => this.prisma.carousel.update(item)),
+      positionsMap.map((item) => this.prisma.feedback.update(item)),
     );
   }
 
   async setActive(guid: string, isActive: boolean) {
-    return this.prisma.carousel.update({
+    return this.prisma.feedback.update({
       where: {
         uuid: guid,
       },
@@ -114,9 +113,10 @@ export class CarouselService {
     });
   }
 
-  async search(search: string) {
-    return this.prisma.carousel.findMany({
+  async search(establishmentUuid: string, search: string) {
+    return this.prisma.feedback.findMany({
       where: {
+        establishmentUuid,
         name: {
           contains: search,
         },
@@ -124,7 +124,6 @@ export class CarouselService {
       select: {
         uuid: true,
         name: true,
-        link: true,
         isActive: true,
         url: true,
       },

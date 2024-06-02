@@ -25,8 +25,12 @@ export class CheckoutController {
     @Request() req: AuthReq,
     @Body() createCheckoutDto: CreateCheckoutDto,
   ) {
-    const { id } = req.user;
-    const url = await this.checkoutService.create(id, createCheckoutDto);
+    const { id, establishmentUuid } = req.user;
+    const url = await this.checkoutService.create(
+      id,
+      establishmentUuid,
+      createCheckoutDto,
+    );
 
     return { url };
   }
@@ -48,8 +52,12 @@ export class CheckoutController {
     @Request() req: AuthReq,
     @Body() createCheckoutDto: CreateCheckoutTakeoutDto,
   ) {
-    const { id } = req.user;
-    const url = await this.checkoutService.createTakeout(id, createCheckoutDto);
+    const { id, establishmentUuid } = req.user;
+    const url = await this.checkoutService.createTakeout(
+      id,
+      establishmentUuid,
+      createCheckoutDto,
+    );
 
     return { url };
   }
@@ -76,9 +84,7 @@ export class CheckoutController {
   @HttpCode(HttpStatus.OK)
   @Post('/not')
   async notification(@Body() body: any) {
-    console.log(body);
     if (body?.event !== 'PAYMENT_CONFIRMED') return;
-    // if (!body?.data?.id) return;
     this.checkoutService.updatePayment(body.payment.paymentLink);
 
     return 'OK';

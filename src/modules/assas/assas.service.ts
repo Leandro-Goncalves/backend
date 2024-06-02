@@ -10,6 +10,7 @@ interface Payment {
   name: string;
   description: string;
   value: number;
+  maxInstallmentCount: number;
 }
 
 const headers = (token: string) => ({
@@ -50,14 +51,15 @@ export class AssasService {
   }
 
   paymentLink(paymentProps: Payment) {
-    return this.api.post<{ id: string; url: string }>(
-      `${this.assasURL}/paymentLinks`,
-      {
-        billingType: 'UNDEFINED',
-        chargeType: 'DETACHED',
-        dueDateLimitDays: 10,
-        ...paymentProps,
-      },
-    );
+    return this.api.post<{
+      id: string;
+      url: string;
+      maxInstallmentCount: number;
+    }>(`${this.assasURL}/paymentLinks`, {
+      billingType: 'UNDEFINED',
+      chargeType: 'INSTALLMENT',
+      dueDateLimitDays: 10,
+      ...paymentProps,
+    });
   }
 }
