@@ -1,5 +1,9 @@
 export const SizesArray = [
   {
+    guid: 'da51d22c-70df-422c-a214-31d8a88568d9',
+    name: 'p',
+  },
+  {
     guid: 'de4e5b60-00bd-4fe4-ae33-7667e7191c7f',
     name: 'm',
   },

@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsInt } from 'class-validator';
+import { IsInt, IsOptional, IsString } from 'class-validator';
 
 export class PaginationQueryDto {
   @IsInt()
@@ -9,6 +9,14 @@ export class PaginationQueryDto {
   @IsInt()
   @Transform(({ value }) => Number(value))
   size: number;
+
+  @IsString()
+  @IsOptional()
+  startDate?: Date;
+
+  @IsString()
+  @IsOptional()
+  endDate?: Date;
 }
 
 export class PaginationResponseDto<T> {

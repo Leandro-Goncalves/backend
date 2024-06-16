@@ -1,6 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { CreateReportDto } from './dto/create-report.dto';
-import { UpdateReportDto } from './dto/update-report.dto';
 import { PrismaService } from '@/prisma/prisma.service';
 import { PaginationQueryDto, PaginationResponseDto } from '@/utils/pagination';
 
@@ -9,23 +7,20 @@ export class ReportsService {
   constructor(private readonly prismaService: PrismaService) {}
 
   async findSales(paginationQueryDto: PaginationQueryDto) {
-    const orders = await this.prismaService.order
+    const ordersDelivery = await this.prismaService.order
       .findMany({
-        take: paginationQueryDto.size,
-        skip: paginationQueryDto.page * paginationQueryDto.size,
         where: {
           status: 'finished',
+          updatedAt: {
+            gte: paginationQueryDto.startDate,
+            lte: paginationQueryDto.endDate,
+          },
         },
         select: {
           guid: true,
           total: true,
           freightValue: true,
-          state: true,
-          city: true,
-          neighborhood: true,
-          street: true,
-          number: true,
-          complement: true,
+          products: true,
           user: {
             select: {
               name: true,
@@ -44,13 +39,74 @@ export class ReportsService {
         }));
       });
 
-    const ordersTotal = await this.prismaService.order.count({
+    const ordersTakeout = await this.prismaService.orderTakeout
+      .findMany({
+        where: {
+          status: 'finished',
+          updatedAt: {
+            gte: paginationQueryDto.startDate,
+            lte: paginationQueryDto.endDate,
+          },
+        },
+        select: {
+          guid: true,
+          total: true,
+          products: true,
+          user: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
+          updatedAt: true,
+        },
+      })
+      .then((orders) => {
+        return orders.map((order) => ({
+          ...order,
+          user: undefined,
+          userName: order.user.name,
+          email: order.user.email,
+        }));
+      });
+
+    const ordersTakeoutTotal = await this.prismaService.orderTakeout.count({
       where: {
         status: 'finished',
+        updatedAt: {
+          gte: paginationQueryDto.startDate,
+          lte: paginationQueryDto.endDate,
+        },
       },
     });
 
-    console.log(orders);
+    const ordersDeliveryTotal = await this.prismaService.order.count({
+      where: {
+        status: 'finished',
+        updatedAt: {
+          gte: paginationQueryDto.startDate,
+          lte: paginationQueryDto.endDate,
+        },
+      },
+    });
+
+    const ordersTotal = ordersDeliveryTotal + ordersTakeoutTotal;
+
+    ordersDelivery.map((order) => {
+      order.products = JSON.parse(order.products as string);
+    });
+
+    ordersTakeout.map((orderTakeout) => {
+      orderTakeout.products = JSON.parse(orderTakeout.products as string);
+    });
+
+    const orders = [...ordersDelivery, ...ordersTakeout]
+      .sort((a, b) => (a.updatedAt.getTime() < b.updatedAt.getDate() ? 1 : -1))
+      .slice(
+        paginationQueryDto.size * paginationQueryDto.page,
+        paginationQueryDto.size * paginationQueryDto.page +
+          paginationQueryDto.size,
+      );
 
     return new PaginationResponseDto({
       currentPage: paginationQueryDto.page,
@@ -64,23 +120,38 @@ export class ReportsService {
     });
   }
 
-  create(createReportDto: CreateReportDto) {
-    return 'This action adds a new report';
-  }
+  async findUsers(paginationQueryDto: PaginationQueryDto) {
+    const users = await this.prismaService.user.findMany({
+      skip: paginationQueryDto.size * paginationQueryDto.page,
+      take: paginationQueryDto.size,
+      orderBy: {
+        createdAt: 'desc',
+      },
+      where: {
+        isAdmin: false,
+      },
+      select: {
+        uuid: true,
+        name: true,
+        email: true,
+        phone: true,
+        cpf: true,
+        orders: true,
+        OrderTakeout: true,
+      },
+    });
 
-  findAll() {
-    return `This action returns all reports`;
-  }
+    const usersTotal = await this.prismaService.user.count({});
 
-  findOne(id: number) {
-    return `This action returns a #${id} report`;
-  }
-
-  update(id: number, updateReportDto: UpdateReportDto) {
-    return `This action updates a #${id} report`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} report`;
+    return new PaginationResponseDto({
+      currentPage: paginationQueryDto.page,
+      pageSize: paginationQueryDto.size,
+      results: users,
+      totalItems: usersTotal,
+      totalPages: Math.ceil(usersTotal / paginationQueryDto.size),
+      hasMore:
+        paginationQueryDto.page <
+        Math.ceil(usersTotal / paginationQueryDto.size),
+    });
   }
 }

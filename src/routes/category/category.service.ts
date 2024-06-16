@@ -89,30 +89,23 @@ export class CategoryService {
             Products: category.Products.flatMap((p) => {
               if (p.isActive === false && showDisableProducts === false)
                 return [];
-              const totalItems = p.variants.reduce(
-                (acc, cur) =>
-                  acc + cur.size.reduce((acc, cur) => acc + cur.quantity, 0),
-                0,
-              );
-
-              if (totalItems === 0 && showDisableProducts === false) {
-                return [];
-              }
               return [
                 {
                   ...p,
                   variants: p.variants.flatMap((v) => {
+                    let isSoldOut = false;
                     const totalItems = v.size.reduce(
                       (acc, cur) => acc + cur.quantity,
                       0,
                     );
 
                     if (totalItems === 0 && showDisableProducts === false) {
-                      return [];
+                      isSoldOut = true;
                     }
                     return [
                       {
                         ...v,
+                        isSoldOut,
                         size: v.size,
                       },
                     ];
