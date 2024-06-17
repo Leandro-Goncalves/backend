@@ -498,6 +498,7 @@ export class CheckoutService {
               email: true,
               name: true,
               phone: true,
+              cpf: true,
             },
           },
         },

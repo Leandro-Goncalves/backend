@@ -34,7 +34,7 @@ export class MelhorEnvioService {
     private readonly options: MelhorEnvioModuleOptions,
   ) {}
 
-  cart = Cart(this.options.token);
-  shipment = Shipment(this.options.token);
-  orders = Orders(this.options.token);
+  cart = Cart(this.options.token, this.options.environment);
+  shipment = Shipment(this.options.token, this.options.environment);
+  orders = Orders(this.options.token, this.options.environment);
 }

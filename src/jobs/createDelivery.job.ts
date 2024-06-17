@@ -59,7 +59,7 @@ export class CreateDeliveryJob {
         address: product.street,
         district: product.neighborhood,
         city: product.city,
-        document: product.cpf,
+        document: product.user.cpf,
         postal_code: product.cep,
         number: product.number,
         email: product.user.email,

@@ -1,4 +1,7 @@
-import { MELHOR_ENVIO_API } from '../melhor-envio.constants';
+import {
+  MELHOR_ENVIO_API,
+  MELHOR_ENVIO_API_PROD,
+} from '../melhor-envio.constants';
 import { AddToCartDTO } from '../melhor-envio.interface';
 import { fetchApi } from '../melhor-envio.service';
 
@@ -13,12 +16,17 @@ const defaultAddress = {
   postal_code: '13736815',
 };
 
-export const Cart = (token: string) => {
+export const Cart = (
+  token: string,
+  environment: 'homologacao' | 'producao',
+) => {
+  const apiUrl =
+    environment === 'homologacao' ? MELHOR_ENVIO_API : MELHOR_ENVIO_API_PROD;
   const api = fetchApi(token);
 
   return {
     add: async (addToCartDTO: AddToCartDTO) => {
-      return api.post<{ id: string }>(`${MELHOR_ENVIO_API}me/cart`, {
+      return api.post<{ id: string }>(`${apiUrl}me/cart`, {
         service: addToCartDTO.serviceId,
         from: defaultAddress,
         to: addToCartDTO.to,

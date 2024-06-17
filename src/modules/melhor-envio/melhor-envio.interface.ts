@@ -1,6 +1,7 @@
 export interface MelhorEnvioModuleOptions {
   global?: boolean;
   token: string;
+  environment: 'homologacao' | 'producao';
 }
 
 interface Product {

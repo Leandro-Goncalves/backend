@@ -73,6 +73,7 @@ import { ReportsModule } from './routes/reports/reports.module';
     MelhorEnvioModule.register({
       global: true,
       token: Env.MelhorEnvioToken,
+      environment: Env.isDev ? 'homologacao' : 'producao',
     }),
     CouponModule,
     DoubtsModule,
