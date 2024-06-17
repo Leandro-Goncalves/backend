@@ -1,5 +1,5 @@
 import { MelhorEnvioService } from '@/modules/melhor-envio/melhor-envio.service';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { SearchFreightDto } from './dto/freight-freight.dto';
 import { default as cepType } from 'cep-promise';
 import * as getCEP from 'cep-promise';
@@ -12,7 +12,11 @@ export class FreightService {
 
   async get(searchFreightDto: SearchFreightDto) {
     const gepPromise = getCEP as any as typeof cepType;
-    const data = await gepPromise(searchFreightDto.to);
+    const data = await gepPromise(searchFreightDto.to).catch(() => null);
+
+    if (data === null) {
+      return [];
+    }
 
     if (data.city === 'Mococa') {
       return [
@@ -35,6 +39,8 @@ export class FreightService {
     const freight = await this.melhorEnvioService.shipment
       .calculate(searchFreightDto)
       .catch(() => []);
+
+    Logger.log('[freight]', freight);
 
     return freight.flatMap((v: any) => {
       if (!COMPANIES.includes(v.company.id)) {
