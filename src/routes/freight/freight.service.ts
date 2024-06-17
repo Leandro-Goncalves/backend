@@ -32,8 +32,9 @@ export class FreightService {
       ];
     }
 
-    const freight =
-      await this.melhorEnvioService.shipment.calculate(searchFreightDto);
+    const freight = await this.melhorEnvioService.shipment
+      .calculate(searchFreightDto)
+      .catch(() => []);
 
     return freight.flatMap((v: any) => {
       if (!COMPANIES.includes(v.company.id)) {
