@@ -85,7 +85,7 @@ export class CheckoutController {
   @Post('/not')
   async notification(@Body() body: any) {
     if (body?.event !== 'PAYMENT_CONFIRMED') return;
-    if (body.installmentNumber !== 1) return;
+    if (body.payment.installmentNumber !== 1) return;
     this.checkoutService.updatePayment(body.payment.paymentLink);
 
     return 'OK';
