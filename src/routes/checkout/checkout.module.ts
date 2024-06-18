@@ -6,7 +6,14 @@ import { CreateDeliveryJob } from '@/jobs/createDelivery.job';
 import { DiscountCheckoutService } from './discount-checkout/discount-checkout.service';
 
 @Module({
-  imports: [BullModule.registerQueue({ name: 'create-delivery-job' })],
+  imports: [
+    BullModule.registerQueue({
+      name: 'create-delivery-job',
+      redis: {
+        enableTLSForSentinelMode: true,
+      },
+    }),
+  ],
   controllers: [CheckoutController],
   providers: [CheckoutService, CreateDeliveryJob, DiscountCheckoutService],
 })
