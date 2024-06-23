@@ -11,6 +11,7 @@ interface Payment {
   description: string;
   value: number;
   maxInstallmentCount: number;
+  billingType: 'BOLETO' | 'CREDIT_CARD' | 'PIX';
 }
 
 const headers = (token: string) => ({

@@ -22,6 +22,9 @@ class Items {
 
 export class CreateCheckoutTakeoutDto {
   @IsString()
+  type: 'pix' | 'boleto' | 'card';
+
+  @IsString()
   @IsOptional()
   couponCode?: string;
 

@@ -198,11 +198,15 @@ export class CheckoutService {
       throw Errors.Products.InsufficientValue;
     }
 
+    const isCreditCard = createCheckoutDto.type === 'card';
+    const isPix = createCheckoutDto.type === 'pix';
+
     const paymentLink = await this.assasService.paymentLink({
       name: 'Cacau Store',
       description: 'Cacau Store',
       value: total,
-      maxInstallmentCount: establishment.installments,
+      billingType: isCreditCard ? 'CREDIT_CARD' : isPix ? 'PIX' : 'BOLETO',
+      maxInstallmentCount: isCreditCard ? establishment.installments : 1,
     });
 
     await this.prisma.orderTakeout.create({
@@ -281,11 +285,15 @@ export class CheckoutService {
       },
     });
 
+    const isCreditCard = createCheckoutDto.type === 'card';
+    const isPix = createCheckoutDto.type === 'pix';
+
     const paymentLink = await this.assasService.paymentLink({
       name: 'Cacau Store',
       description: 'Cacau Store',
       value: total,
-      maxInstallmentCount: establishment.installments,
+      billingType: isCreditCard ? 'CREDIT_CARD' : isPix ? 'PIX' : 'BOLETO',
+      maxInstallmentCount: isCreditCard ? establishment.installments : 1,
     });
 
     await this.prisma.order.create({

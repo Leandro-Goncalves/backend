@@ -44,6 +44,9 @@ class Address {
 }
 
 export class CreateCheckoutDto {
+  @IsString()
+  type: 'pix' | 'boleto' | 'card';
+
   @ValidateNested()
   to: Address;
 
