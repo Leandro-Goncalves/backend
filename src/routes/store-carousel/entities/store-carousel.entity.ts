@@ -9,7 +9,7 @@ export class StoreCarousel implements Partial<IStoreCarousel> {
   isActive: boolean;
 
   @IsString()
-  name: string;
+  title: string;
 
   @IsInt()
   position: number;
