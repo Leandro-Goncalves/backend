@@ -12,6 +12,7 @@ import { CreateCheckoutTakeoutDto } from './dto/create-checkout-takeout.dto';
 import { Env } from '@/config/env';
 import { DiscountCheckoutService } from './discount-checkout/discount-checkout.service';
 import { Errors } from '@/errors';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 export const createVolumes = (
   itens: { product: { uuid: string }; quantity: number }[],
@@ -615,5 +616,54 @@ export class CheckoutService {
         );
       }
     } catch {}
+  }
+  // @Cron(CronExpression.EVERY_HOUR)
+  @Cron(CronExpression.EVERY_10_MINUTES)
+  async handleCron() {
+    const pendingPayments = await this.prisma.pendingPayments.findMany({
+      where: { wasPaid: false },
+    });
+    console.log('pendingPayments', pendingPayments);
+
+    for await (const payment of pendingPayments) {
+      const id = payment.paymentGuid;
+      // const checkoutData = await this.melhorEnvioService.shipment.checkout([
+      //   id,
+      // ]);
+      // if ((checkoutData as any).errors) return;
+
+      const generateData = await this.melhorEnvioService.shipment.generate([
+        id,
+      ]);
+      console.log('generateData', generateData);
+      if ((generateData as any).errors) return;
+      if (
+        Object.values(generateData as any).some(
+          (v: { status?: boolean }) => v?.status === false,
+        )
+      )
+        return;
+
+      const ordersData = await this.melhorEnvioService.orders.get(id);
+      if ((ordersData as any).errors) return;
+
+      await this.prisma.order.update({
+        where: {
+          guid: payment.productGuid,
+        },
+        data: {
+          tracking: ordersData.tracking,
+        },
+      });
+      await this.prisma.pendingPayments.update({
+        where: {
+          guid: payment.guid,
+        },
+        data: {
+          wasPaid: true,
+        },
+      });
+    }
+    console.log('Called every 30 seconds');
   }
 }

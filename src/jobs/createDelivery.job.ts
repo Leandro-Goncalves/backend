@@ -82,28 +82,60 @@ export class CreateDeliveryJob {
     if ((data as any).errors)
       throw new Error(JSON.stringify((data as any).errors));
 
-    const data2 = await this.melhorEnvioService.shipment.checkout([data.id]);
-    console.log({ data2 });
-    if ((data2 as any).errors)
-      throw new Error(JSON.stringify((data2 as any).errors));
-
-    const data3 = await this.melhorEnvioService.shipment.generate([data.id]);
-    console.log({ data3 });
-    if ((data3 as any).errors)
-      throw new Error(JSON.stringify((data3 as any).errors));
-
-    const data4 = await this.melhorEnvioService.orders.get(data.id);
-    if ((data4 as any).errors)
-      throw new Error(JSON.stringify((data4 as any).errors));
-
-    await this.prisma.order.update({
-      where: {
-        guid: product.guid,
-      },
+    await this.prisma.pendingPayments.create({
       data: {
-        tracking: data4.tracking,
+        productGuid: product.guid,
+        paymentGuid: data.id,
+        orderJSON: {
+          serviceId: String(product.freightId),
+          to: {
+            address: product.street,
+            district: product.neighborhood,
+            city: product.city,
+            document: product.user.cpf,
+            postal_code: product.cep,
+            number: product.number,
+            email: product.user.email,
+            name: product.user.name,
+            phone: product.user.phone,
+            complement: product.complement,
+          },
+          products: [
+            ...formattedProducts,
+            {
+              name: 'Outras despezas',
+              quantity: '1',
+              unitary_value: String(feeValue),
+            },
+          ],
+          volumes,
+          insuranceValue: totalValue,
+        },
       },
     });
+
+    // const data2 = await this.melhorEnvioService.shipment.checkout([data.id]);
+    // console.log({ data2 });
+    // if ((data2 as any).errors)
+    //   throw new Error(JSON.stringify((data2 as any).errors));
+
+    // const data3 = await this.melhorEnvioService.shipment.generate([data.id]);
+    // console.log({ data3 });
+    // if ((data3 as any).errors)
+    //   throw new Error(JSON.stringify((data3 as any).errors));
+
+    // const data4 = await this.melhorEnvioService.orders.get(data.id);
+    // if ((data4 as any).errors)
+    //   throw new Error(JSON.stringify((data4 as any).errors));
+
+    // await this.prisma.order.update({
+    //   where: {
+    //     guid: product.guid,
+    //   },
+    //   data: {
+    //     tracking: data4.tracking,
+    //   },
+    // });
 
     return {};
   }

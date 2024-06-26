@@ -34,6 +34,14 @@ model StoreCarousel {
   position Int
 }
 
+model pendingPayments {
+  guid        String  @id @default(uuid())
+  productGuid String
+  paymentGuid String
+  wasPaid     Boolean @default(false)
+  orderJSON   Json
+}
+
 model Coupom {
   guid              String         @id @default(uuid())
   isActive          Boolean        @default(false)

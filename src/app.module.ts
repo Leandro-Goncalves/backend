@@ -28,10 +28,12 @@ import { BlockModule } from './routes/block/block.module';
 import { FeedbacksModule } from './routes/feedbacks/feedbacks.module';
 import { StoreCarouselModule } from './routes/store-carousel/store-carousel.module';
 import { ReportsModule } from './routes/reports/reports.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Global()
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     BunnyCDNModule.forRoot({
       apiAccessKey: Env.BunnyNetAccessKey,
       storageZones: [
@@ -67,13 +69,13 @@ import { ReportsModule } from './routes/reports/reports.module';
     FreightModule,
     AssasModule.register({
       global: true,
-      environment: 'homologacao',
+      environment: Env.isDev ? 'homologacao' : 'producao',
       token: Env.AssasToken,
     }),
     MelhorEnvioModule.register({
       global: true,
       token: Env.MelhorEnvioToken,
-      environment: 'homologacao',
+      environment: Env.isDev ? 'homologacao' : 'producao',
     }),
     CouponModule,
     DoubtsModule,
