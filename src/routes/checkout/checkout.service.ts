@@ -13,6 +13,7 @@ import { Env } from '@/config/env';
 import { DiscountCheckoutService } from './discount-checkout/discount-checkout.service';
 import { Errors } from '@/errors';
 import { Cron, CronExpression } from '@nestjs/schedule';
+// import { v4 as uuidv4 } from 'uuid';
 
 export const createVolumes = (
   itens: { product: { uuid: string }; quantity: number }[],
@@ -195,6 +196,23 @@ export class CheckoutService {
 
     const total = itemsTotal - couponDiscount.value;
 
+    // if (total === 0) {
+    //   const orderId = uuidv4();
+    //   await this.prisma.orderTakeout.create({
+    //     data: {
+    //       guid: orderId,
+    //       products: JSON.stringify(productFormatted),
+    //       total,
+    //       coupomGuid: couponDiscount.guid,
+    //       userId,
+    //       paymentLink: '',
+    //     },
+    //   });
+
+    //   await this.updatePayment(orderId);
+    //   return;
+    // }
+
     if (total < 5) {
       throw Errors.Products.InsufficientValue;
     }
@@ -255,7 +273,7 @@ export class CheckoutService {
     if (isFixedFee) {
       freight = {
         id: createCheckoutDto.freightId,
-        price: 5,
+        price: 0,
       };
     } else {
       const melhorEnvio = await this.melhorEnvioService.shipment.calculate({
@@ -285,6 +303,37 @@ export class CheckoutService {
         uuid: establishmentUuid,
       },
     });
+
+    // if (total === 0) {
+    //   const orderId = uuidv4();
+    //   await this.prisma.order.create({
+    //     data: {
+    //       guid: orderId,
+    //       products: JSON.stringify(productFormatted),
+    //       total,
+    //       userId,
+    //       freightValue: Number(freight.price),
+    //       coupomGuid: couponDiscount.guid,
+    //       freightId: createCheckoutDto.freightId,
+    //       cep: address.cep,
+    //       city: address.city,
+    //       neighborhood: address.neighborhood,
+    //       state: address.state,
+    //       street: address.street,
+    //       paymentLink: '',
+    //       complement: address.complement,
+    //       number: address.number,
+    //       isFixedFee,
+    //     },
+    //   });
+
+    //   await this.updatePayment(orderId);
+    //   return;
+    // }
+
+    // if (total < 5) {
+    //   throw Errors.Products.InsufficientValue;
+    // }
 
     const isCreditCard = createCheckoutDto.type === 'card';
     const isPix = createCheckoutDto.type === 'pix';
@@ -491,6 +540,7 @@ export class CheckoutService {
   async updatePayment(orderId: string) {
     try {
       const orderType = await this.getOrder(orderId);
+      if (orderType.data.status === OrderStatus.success) return;
       const isDelivery = orderType.type === 'delivery';
 
       const orderData = {

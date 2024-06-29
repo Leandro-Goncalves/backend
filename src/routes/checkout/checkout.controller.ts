@@ -87,7 +87,11 @@ export class CheckoutController {
     console.log(body);
     console.log(body.event);
     console.log(body.payment.installmentNumber);
-    if (body?.event !== 'PAYMENT_CONFIRMED') return;
+    if (
+      body?.event !== 'PAYMENT_CONFIRMED' &&
+      body?.event !== 'PAYMENT_RECEIVED'
+    )
+      return;
     if (body.payment.installmentNumber !== 1) return;
     this.checkoutService.updatePayment(body.payment.paymentLink);
 

@@ -23,7 +23,7 @@ export class FreightService {
         {
           id: 10000,
           name: 'Mococa/SP',
-          price: 5,
+          price: 0,
           company: {
             name: 'Frete fixo',
           },
