@@ -124,9 +124,10 @@ export class ProductsService {
     }));
 
     await this.prisma.image.createMany({
-      data: imageArray.map(({ imageId }) => ({
+      data: imageArray.map(({ imageId }, index) => ({
         imageId,
         productVariantGuid: id,
+        priority: index + 1,
       })),
     });
 

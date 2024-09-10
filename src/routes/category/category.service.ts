@@ -69,9 +69,16 @@ export class CategoryService {
               variants: {
                 include: {
                   size: true,
-                  Image: true,
+                  Image: {
+                    orderBy: {
+                      priority: 'asc',
+                    },
+                  },
                 },
               },
+            },
+            orderBy: {
+              updatedAt: 'desc',
             },
           },
         },
