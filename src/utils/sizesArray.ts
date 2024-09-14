@@ -19,4 +19,8 @@ export const SizesArray = [
     guid: 'db4dd17c-fe56-4f78-9649-553d830feedd',
     name: 'plus',
   },
+  {
+    guid: '8f0c4ccd-7fa5-498c-8895-a6bb125bdd61',
+    name: 'u',
+  },
 ];
